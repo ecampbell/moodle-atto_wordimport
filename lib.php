@@ -17,7 +17,7 @@
 /**
  * Atto text editor drag and drop Microsoft Word files.
  *
- * @package    atto_worddragdrop
+ * @package    atto_word
  * @copyright  2015 Eoin Campbell
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die();
  * Initialise this plugin
  * @param string $elementid
  */
-function atto_worddragdrop_strings_for_js() {
+function atto_word_strings_for_js() {
     global $PAGE;
 
     $strings = array(
@@ -40,6 +40,6 @@ function atto_worddragdrop_strings_for_js() {
         'dialogtitle'
     );
 
-    $PAGE->requires->strings_for_js($strings, 'atto_worddragdrop');
+    $PAGE->requires->strings_for_js($strings, 'atto_word');
 }
 

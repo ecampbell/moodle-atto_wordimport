@@ -15,19 +15,19 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Atto worddragdrop version file.
+ * Atto word version file.
  *
- * @package    atto_worddragdrop
+ * @package    atto_word
  * @copyright  2015 Eoin Campbell
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2015072004;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version   = 2015072601;        // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2013110500;        // Requires this Moodle version.
-$plugin->component = 'atto_worddragdrop';  // Full name of the plugin (used for diagnostics).
+$plugin->component = 'atto_word';  // Full name of the plugin (used for diagnostics).
 $plugin->maturity  = MATURITY_BETA;
 // Human readable version informatiomn
-$plugin->release   = '0.0.4 (Build 2015072004)';
+$plugin->release   = '0.0.1 (Build 2015072601)';
 

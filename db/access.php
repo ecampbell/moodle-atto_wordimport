@@ -17,7 +17,7 @@
 /**
  * Plugin capabilities
  *
- * @package    atto_worddragdrop
+ * @package    atto_word
  * @copyright  2015 Eoin Campbell
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -26,7 +26,7 @@ defined('MOODLE_INTERNAL') || die();
 
 $capabilities = array(
 
-    'atto/worddragdrop:visible' => array(
+    'atto/word:visible' => array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes' => array(

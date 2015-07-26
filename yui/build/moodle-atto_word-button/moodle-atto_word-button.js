@@ -1,4 +1,4 @@
-YUI.add('moodle-atto_worddragdrop-button', function (Y, NAME) {
+YUI.add('moodle-atto_word-button', function (Y, NAME) {
 
 // This file is part of Moodle - http://moodle.org/
 //
@@ -16,33 +16,33 @@ YUI.add('moodle-atto_worddragdrop-button', function (Y, NAME) {
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /*
- * @package    atto_worddragdrop
+ * @package    atto_word
  * @copyright  2015 Eoin Campbell
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
- * @module moodle-atto_worddragdrop-button
+ * @module moodle-atto_word-button
  */
 
 /**
- * Atto text editor worddragdrop plugin.
+ * Atto text editor word plugin.
  *
  * This plugin adds the ability to drop a Word file in and have it automatically
  * convert the contents into XHTML and into the text box.
  *
- * @namespace M.atto_worddragdrop
+ * @namespace M.atto_word
  * @class Button
  * @extends M.editor_atto.EditorPlugin
  */
-var COMPONENTNAME = 'atto_worddragdrop';
+var COMPONENTNAME = 'atto_word';
 var WORDTEMPLATE = '' +
             '<img src="{{url}}" alt="{{alt}}" ' +
                 ' style="vertical-align:text-bottom;margin: 0 .5em;" class="img-responsive" ' +
                 '{{#if id}}id="{{id}}" {{/if}}' +
                 '/>';
 
-Y.namespace('M.atto_worddragdrop').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
+Y.namespace('M.atto_word').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
     /**
      * A reference to the current selection at the time that the dialogue
      * was opened.

@@ -15,18 +15,18 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Strings for component 'atto_worddragdrop', language 'en'.
+ * Strings for component 'atto_word', language 'en'.
  *
- * @package    atto_worddragdrop
+ * @package    atto_word
  * @copyright  2015 Eoin Campbell
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['createworddragdrop'] = 'Create Word drag & drop';
-$string['pluginname'] = 'Word drag & drop (Atto)';
-$string['settings'] = 'Word drag & drop (Atto)';
+$string['createword'] = 'Create Word Import';
+$string['pluginname'] = 'Word import (Atto)';
+$string['settings'] = 'Word Import (Atto)';
 $string['uploading'] = 'Uploading, please wait...';
-$string['converting'] = 'Converting, please wait...';
+$string['converting'] = 'Importing, please wait...';
 $string['browse'] = 'Browse';
 $string['visible'] = 'Visible';
 $string['nothingtoinsert'] = 'Nothing to insert!';
@@ -35,4 +35,4 @@ $string['insert'] = 'Insert';
 $string['cancel'] = 'Cancel';
 $string['enterflavor'] = 'Enter Ice Cream Flavor';
 $string['defaultflavor'] = 'Default Ice Cream Flavor';
-$string['worddragdrop:visible'] = 'Visible';
+$string['word:visible'] = 'Visible';

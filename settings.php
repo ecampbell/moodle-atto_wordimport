@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * worddragdrop settings.
+ * word settings.
  *
- * @package    atto_worddragdrop
+ * @package    atto_word
  * @copyright  2015 Eoin Campbell
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -25,11 +25,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$ADMIN->add('editoratto', new admin_category('atto_worddragdrop', new lang_string('pluginname', 'atto_worddragdrop')));
+$ADMIN->add('editoratto', new admin_category('atto_word', new lang_string('pluginname', 'atto_word')));
 
-$settings = new admin_settingpage('atto_worddragdrop_settings', new lang_string('settings', 'atto_worddragdrop'));
+$settings = new admin_settingpage('atto_word_settings', new lang_string('settings', 'atto_word'));
 if ($ADMIN->fulltree) {
 	// An option setting
-	$settings->add(new admin_setting_configtext('atto_worddragdrop/defaultflavor', 
-		get_string('defaultflavor', 'atto_worddragdrop'), '', 'vanilla', PARAM_TEXT));
+	$settings->add(new admin_setting_configtext('atto_word/defaultflavor', 
+		get_string('defaultflavor', 'atto_word'), '', 'vanilla', PARAM_TEXT));
 }
