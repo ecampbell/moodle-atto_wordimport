@@ -1,7 +1,7 @@
 {
-    "name": "moodle-atto_word-button",
+    "name": "moodle-atto_wordimport-button",
     "builds": {
-        "moodle-atto_word-button": {
+        "moodle-atto_wordimport-button": {
             "jsfiles": [
                 "button.js"
             ]

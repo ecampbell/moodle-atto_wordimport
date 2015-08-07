@@ -1,4 +1,4 @@
-YUI.add('moodle-atto_word-button', function (Y, NAME) {
+YUI.add('moodle-atto_wordimport-button', function (Y, NAME) {
 
 // This file is part of Moodle - http://moodle.org/
 //
@@ -16,33 +16,33 @@ YUI.add('moodle-atto_word-button', function (Y, NAME) {
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /*
- * @package    atto_word
+ * @package    atto_wordimport
  * @copyright  2015 Eoin Campbell
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
- * @module moodle-atto_word-button
+ * @module moodle-atto_wordimport-button
  */
 
 /**
- * Atto text editor word plugin.
+ * Atto text editor word import plugin.
  *
  * This plugin adds the ability to drop a Word file in and have it automatically
  * convert the contents into XHTML and into the text box.
  *
- * @namespace M.atto_word
+ * @namespace M.atto_wordimport
  * @class Button
  * @extends M.editor_atto.EditorPlugin
  */
-var COMPONENTNAME = 'atto_word';
-var WORDTEMPLATE = '' +
+var COMPONENTNAME = 'atto_wordimport';
+var TEMPLATE = '' +
             '<img src="{{url}}" alt="{{alt}}" ' +
                 ' style="vertical-align:text-bottom;margin: 0 .5em;" class="img-responsive" ' +
                 '{{#if id}}id="{{id}}" {{/if}}' +
                 '/>';
 
-Y.namespace('M.atto_word').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
+Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
     /**
      * A reference to the current selection at the time that the dialogue
      * was opened.
@@ -61,7 +61,7 @@ Y.namespace('M.atto_word').Button = Y.Base.create('button', Y.M.editor_atto.Edit
     initializer : function() {
         var self = this;
         var host = this.get('host');
-        var template = Y.Handlebars.compile(WORDTEMPLATE);
+        var template = Y.Handlebars.compile(TEMPLATE);
         this.editor.on('drop', function(e) {
             host.saveSelection();
             e = e._event;

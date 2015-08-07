@@ -17,7 +17,7 @@
 /**
  * word settings.
  *
- * @package    atto_word
+ * @package    atto_wordimport
  * @copyright  2015 Eoin Campbell
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -25,11 +25,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$ADMIN->add('editoratto', new admin_category('atto_word', new lang_string('pluginname', 'atto_word')));
+$ADMIN->add('editoratto', new admin_category('atto_wordimport', new lang_string('pluginname', 'atto_wordimport')));
 
-$settings = new admin_settingpage('atto_word_settings', new lang_string('settings', 'atto_word'));
+$settings = new admin_settingpage('atto_wordimport_settings', new lang_string('settings', 'atto_wordimport'));
 if ($ADMIN->fulltree) {
 	// An option setting
-	$settings->add(new admin_setting_configtext('atto_word/defaultflavor', 
-		get_string('defaultflavor', 'atto_word'), '', 'vanilla', PARAM_TEXT));
+	$settings->add(new admin_setting_configtext('atto_wordimport/defaultflavor', 
+		get_string('defaultflavor', 'atto_wordimport'), '', 'vanilla', PARAM_TEXT));
 }
