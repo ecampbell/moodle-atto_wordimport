@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * word settings.
+ * Atto text editor import Microsoft Word files - settings.
  *
  * @package    atto_wordimport
  * @copyright  2015 Eoin Campbell

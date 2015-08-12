@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Atto text editor drag and drop Microsoft Word files.
+ * Atto text editor import Microsoft Word files.
  *
  * @package    atto_wordimport
  * @copyright  2015 Eoin Campbell
