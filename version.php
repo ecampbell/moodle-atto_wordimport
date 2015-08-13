@@ -24,10 +24,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2015081201;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version   = 2015081301;        // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2013110500;        // Requires this Moodle version.
 $plugin->component = 'atto_wordimport';  // Full name of the plugin (used for diagnostics).
 $plugin->maturity  = MATURITY_BETA;
 // Human readable version informatiomn
-$plugin->release   = '0.0.3 (Build 2015081201)';
+$plugin->release   = '0.0.3 (Build 2015081301)';
 
