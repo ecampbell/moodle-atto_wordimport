@@ -37,9 +37,12 @@ function atto_wordimport_strings_for_js() {
         'converting',
         'uploading',
         'enterflavor',
-        'dialogtitle'
+        'dialogtitle',
+        'xmlnotsupported',
+        'pluginname'
     );
 
+    debugging(__FUNCTION__ . "()", DEBUG_DEVELOPER);
     $PAGE->requires->strings_for_js($strings, 'atto_wordimport');
 }
 

@@ -36,6 +36,8 @@ YUI.add('moodle-atto_wordimport-button', function (Y, NAME) {
  * @extends M.editor_atto.EditorPlugin
  */
 
+var COMPONENTNAME = 'att_wordimport';
+
 Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
     /**
      * A reference to the current selection at the time that the dialogue
@@ -48,15 +50,6 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
     _currentSelection: null,
 
     /**
-     * The most recently selected image.
-     *
-     * @param _selectedImage
-     * @type Node
-     * @private
-     */
-    _selectedImage: null,
-
-    /**
      * A reference to the currently open form.
      *
      * @param _form
@@ -64,15 +57,6 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
      * @private
      */
     _form: null,
-
-    /**
-     * The dimensions of the raw image before we manipulate it.
-     *
-     * @param _rawImageDimensions
-     * @type Object
-     * @private
-     */
-    _rawImageDimensions: null,
 
     /**
      * Add event listeners.
@@ -88,9 +72,7 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                     this.get('host').showFilepicker('link', this._handleWordFileUpload, this);
             },
             buttonName: 'iconone',
-            callbackArgs: 'wordimport',
-            tags: 'img',
-            tagMatchRequiresAll: false
+            callbackArgs: 'wordimport'
         });
         this.editor.on('drop', this._handleWordFileDragDrop, this);
     },
@@ -110,6 +92,50 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
         if (/docx$/.test(params.file) === false) {
             return false;
         }
+
+        // Kick off a XMLHttpRequest.
+        var self = this,
+            xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            var placeholder = self.editor.one('#myhtml'),
+                result,
+                file,
+                newcontent;
+
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    result = JSON.parse(xhr.responseText);
+                    if (result) {
+                        if (result.error) {
+                            if (placeholder) {
+                                placeholder.remove(true);
+                            }
+                            return new M.core.ajaxException(result);
+                        }
+
+                        file = result;
+
+                        // Replace placeholder with actual image.
+                        newcontent = Y.Node.create(result.html);
+                        if (placeholder) {
+                            placeholder.replace(result.html);
+                        } else {
+                            self.editor.appendChild(result.html);
+                        }
+                        self.markUpdated();
+                    }
+                } else {
+                    Y.use('moodle-core-notification-alert', function() {
+                        new M.core.alert({message: M.util.get_string('servererror', 'moodle')});
+                    });
+                    if (placeholder) {
+                        placeholder.remove(true);
+                    }
+                }
+            }
+        };
+        xhr.open("GET", M.cfg.wwwroot + '/lib/editor/atto/plugins/wordimport/import.php?wordfileurl=' + params.url, true);
+        xhr.send();
 
         return true;
     },

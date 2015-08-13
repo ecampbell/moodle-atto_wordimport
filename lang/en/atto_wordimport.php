@@ -15,25 +15,17 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Strings for component 'atto_word', language 'en'.
+ * Strings for component 'atto_wordimport', language 'en'.
  *
- * @package    atto_word
+ * @package    atto_wordimport
  * @copyright  2015 Eoin Campbell
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['alignment'] = 'Alignment';
-$string['alignment_bottom'] = 'Bottom';
-$string['alignment_left'] = 'Left';
-$string['alignment_middle'] = 'Middle';
-$string['alignment_right'] = 'Right';
-$string['alignment_top'] = 'Top';
 $string['browse'] = 'Browse';
 $string['browserepositories'] = 'Browse repositories...';
 $string['cancel'] = 'Cancel';
-$string['constrain'] = 'Auto size';
 $string['converting'] = 'Importing, please wait...';
-$string['createimage'] = 'Insert image';
 $string['createword'] = 'Create Word Import';
 $string['customstyle'] = 'Custom style';
 $string['defaultflavor'] = 'Default Ice Cream Flavor';
@@ -41,20 +33,24 @@ $string['dialogtitle'] = 'Enter Preferences';
 $string['enteralt'] = 'Describe this image for someone who cannot see it';
 $string['enterflavor'] = 'Enter Ice Cream Flavor';
 $string['enterurl'] = 'Enter URL';
-$string['height'] = 'Height';
-$string['imageproperties'] = 'Image properties';
 $string['importfile'] = 'Import Word file';
 $string['insert'] = 'Insert';
 $string['nothingtoinsert'] = 'Nothing to insert!';
-$string['pluginname'] = 'Image';
 $string['pluginname'] = 'Word import (Atto)';
-$string['presentation'] = 'Description not necessary';
-$string['presentationoraltrequired'] = 'Images must have a description, except if the description is marked as not necessary.';
-$string['preview'] = 'Preview';
-$string['saveimage'] = 'Save image';
 $string['settings'] = 'Word Import (Atto)';
-$string['size'] = 'Size';
 $string['uploading'] = 'Uploading, please wait...';
 $string['visible'] = 'Visible';
-$string['width'] = 'Width';
-$string['word:visible'] = 'Visible';
+
+// Strings used in import.php
+$string['cannotopentempfile'] = 'Cannot open temporary file <b>{$a}</b>';
+$string['cannotreadzippedfile'] = 'Cannot read Zipped file <b>{$a}</b>';
+$string['cannotwritetotempfile'] = 'Cannot write to temporary file <b>{$a}</b>';
+$string['stylesheetunavailable'] = 'XSLT Stylesheet <b>{$a}</b> is not available';
+$string['transformationfailed'] = 'XSLT transformation failed (<b>{$a}</b>)';
+$string['xsltunavailable'] = 'You need the XSLT library installed in PHP to save this Word file';
+
+// Strings used in JavaScript
+$string['xmlnotsupported'] = 'Files in XML format not supported: <b>{$a}</b>';
+$string['docnotsupported'] = 'Files in Word 2003 format not supported: <b>{$a}</b>, use Moodle2Word 3.x instead';
+$string['htmlnotsupported'] = 'Files in HTML format not supported: <b>{$a}</b>';
+$string['htmldocnotsupported'] = 'Incorrect Word format: please use <i>File>Save As...</i> to save <b>{$a}</b> in native Word 2010 (.docx) format and import again';
