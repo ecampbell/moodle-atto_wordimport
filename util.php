@@ -26,7 +26,10 @@ defined('MOODLE_INTERNAL') || die();
 
 
 /*
- * Delete temporary files if debugging disabled
+ * Delete temporary files, but retain them if debugging enabled
+ *
+ * @param string $filename the name of the file to be deleted
+ * @return void
  */
 function debug_unlink($filename) {
     if (!debugging(null, DEBUG_DEVELOPER)) {
@@ -35,145 +38,10 @@ function debug_unlink($filename) {
 }
 
 /**
- * Get all the text strings needed to fill in the Word file labels in a language-dependent way
+ * Clean HTML content and return a string
  *
- * A string containing XML data, populated from the language folders, is returned
- *
- * @return string
- */
-function get_text_labels() {
-
-    global $CFG;
-
-    debugging(__FUNCTION__ . "()", DEBUG_DEVELOPER);
-
-    // Release-independent list of all strings required in the XSLT stylesheets for labels etc.
-    $textstrings = array(
-        'grades' => array('item'),
-        'moodle' => array('categoryname', 'no', 'yes', 'feedback', 'format', 'formathtml', 'formatmarkdown', 'formatplain', 'formattext', 'grade', 'question', 'tags'),
-        'qformat_wordtable' => array('cloze_instructions', 'cloze_distractor_column_label', 'cloze_feedback_column_label', 'cloze_mcformat_label', 'description_instructions', 'essay_instructions', 'interface_language_mismatch', 'multichoice_instructions', 'truefalse_instructions', 'transformationfailed', 'unsupported_instructions'),
-        'qtype_description' => array('pluginnamesummary'),
-        'qtype_essay' => array('allowattachments', 'graderinfo', 'formateditor', 'formateditorfilepicker', 'formatmonospaced', 'formatplain', 'pluginnamesummary', 'responsefieldlines', 'responseformat'),
-        'qtype_match' => array('filloutthreeqsandtwoas'),
-        'qtype_multichoice' => array('answernumbering', 'choiceno', 'correctfeedback', 'incorrectfeedback', 'partiallycorrectfeedback', 'pluginnamesummary', 'shuffleanswers'),
-        'qtype_shortanswer' => array('casesensitive', 'filloutoneanswer'),
-        'qtype_truefalse' => array('false', 'true'),
-        'question' => array('category', 'clearwrongparts', 'defaultmark', 'generalfeedback', 'hintn','penaltyforeachincorrecttry', 'questioncategory','shownumpartscorrect', 'shownumpartscorrectwhenfinished'),
-        'quiz' => array('answer', 'answers', 'casesensitive', 'correct', 'correctanswers', 'defaultgrade', 'incorrect', 'shuffle')
-        );
-
-    // Append Moodle release-specific text strings, thus avoiding any errors being generated when absent strings are requested
-    if ($CFG->release < '2.0') {
-        $textstrings['quiz'][] = 'choice';
-        $textstrings['quiz'][] = 'penaltyfactor';
-    } else if ($CFG->release >= '2.5') {
-        $textstrings['qtype_essay'][] = 'responsetemplate';
-        $textstrings['qtype_essay'][] = 'responsetemplate_help';
-        $textstrings['qtype_match'][] = 'blanksforxmorequestions';
-        $textstrings['question'][] = 'addmorechoiceblanks';
-        $textstrings['question'][] = 'correctfeedbackdefault';
-        $textstrings['question'][] = 'hintnoptions';
-        $textstrings['question'][] = 'incorrectfeedbackdefault';
-        $textstrings['question'][] = 'partiallycorrectfeedbackdefault';
-    }
-    if ($CFG->release >= '2.7') {
-        $textstrings['qtype_essay'][] = 'attachmentsrequired';
-        $textstrings['qtype_essay'][] = 'responserequired';
-        $textstrings['qtype_essay'][] = 'responseisrequired';
-        $textstrings['qtype_essay'][] = 'responsenotrequired';
-    }
-
-    // Add All-or-Nothing MCQ question type strings if present
-    $qtype = question_bank::get_qtype('multichoiceset', false);
-    if (is_object($qtype) && method_exists($qtype, 'import_from_wordtable')) {
-        debugging(__FUNCTION__ . ":" . __LINE__ . ": multichoiceset exists", DEBUG_DEVELOPER);
-        $textstrings['qtype_multichoiceset'][] = 'pluginnamesummary';
-        $textstrings['qtype_multichoiceset'][] = 'showeachanswerfeedback';
-    }
-
-    $expout = "<moodlelabels>\n";
-    foreach ($textstrings as $type_group => $group_array) {
-        foreach ($group_array as $string_id) {
-            $name_string = $type_group . '_' . $string_id;
-            $expout .= '<data name="' . $name_string . '"><value>' . get_string($string_id, $type_group) . "</value></data>\n";
-        }
-    }
-    $expout .= "</moodlelabels>";
-
-    return $expout;
-}
-
-/**
- * Clean HTML markup inside question text element content
- *
- * A string containing Moodle Question XML with clean HTML inside the text elements is returned
- *
- * @return string
- */
-function clean_all_questions($input_string) {
-    debugging(__FUNCTION__ . "(input_string = " . str_replace("\n", "", substr($input_string, 0, 1000)) . " ...)", DEBUG_DEVELOPER);
-    // Start assembling the cleaned output string, starting with empty
-    $clean_output_string =  "";
-
-    // Split the string into questions in order to check the text fields for clean HTML
-    $found_questions = preg_match_all('~(.*?)<question type="([^"]*)"[^>]*>(.*?)</question>~s', $input_string, $question_matches, PREG_SET_ORDER);
-    $n_questions = count($question_matches);
-    if ($found_questions === FALSE or $found_questions == 0) {
-        debugging(__FUNCTION__ . "() -> Cannot decompose questions", DEBUG_DEVELOPER);
-        return $input_string;
-    }
-    //debugging(__FUNCTION__ . ":" . __LINE__ . ": " . $n_questions . " questions found", DEBUG_DEVELOPER);
-
-    // Split the questions into text strings to check the HTML
-    for ($i = 0; $i < $n_questions; $i++) {
-        $question_type = $question_matches[$i][2];
-        $question_content = $question_matches[$i][3];
-        debugging(__FUNCTION__ . ":" . __LINE__ . ": Processing question " . $i + 1 . " of $n_questions, type $question_type, question length = " . strlen($question_content), DEBUG_DEVELOPER);
-        // Split the question into chunks at CDATA boundaries, using an ungreedy search (?), and matching across newlines (s modifier)
-        $found_cdata_sections = preg_match_all('~(.*?)<\!\[CDATA\[(.*?)\]\]>~s', $question_content, $cdata_matches, PREG_SET_ORDER);
-        // Has the question been imported using WordTable? If so, assume it is clean and don't process it
-        //$imported_from_wordtable = preg_match('~ImportFromWordTable~', $question_content);
-        //if ($imported_from_wordtable !== FALSE and $imported_from_wordtable != 0) {
-        //    debugging(__FUNCTION__ . ":" . __LINE__ . ": Skip cleaning previously imported question " . $i + 1, DEBUG_DEVELOPER);
-        //    $clean_output_string .= $question_matches[$i][0];
-        //} else if ($found_cdata_sections === FALSE) {
-        if ($found_cdata_sections === FALSE) {
-            debugging(__FUNCTION__ . ":" . __LINE__ . ": Cannot decompose CDATA sections in question " . $i + 1, DEBUG_DEVELOPER);
-            $clean_output_string .= $question_matches[$i][0];
-        } else if ($found_cdata_sections != 0) {
-            $n_cdata_sections = count($cdata_matches);
-            debugging(__FUNCTION__ . ":" . __LINE__ . ": " . $n_cdata_sections  . " CDATA sections found in question " . $i + 1 . ", question length = " . strlen($question_content), DEBUG_DEVELOPER);
-            // Found CDATA sections, so first add the question start tag and then process the body
-            $clean_output_string .= '<question type="' . $question_type . '">';
-
-            // Process content of each CDATA section to clean the HTML
-            for ($j = 0; $j < $n_cdata_sections; $j++) {
-                $cdata_content = $cdata_matches[$j][2];
-                $clean_cdata_content = $this->clean_html_text($cdata_matches[$j][2]);
-
-                // Add all the text before the first CDATA start boundary, and the cleaned string, to the output string
-                $clean_output_string .= $cdata_matches[$j][1] . '<![CDATA[' . $clean_cdata_content . ']]>' ;
-            } // End CDATA section loop
-
-            // Add the text after the last CDATA section closing delimiter
-            $text_after_last_CDATA_string = substr($question_matches[$i][0], strrpos($question_matches[$i][0], "]]>") + 3);
-            $clean_output_string .= $text_after_last_CDATA_string;
-        } else {
-            //debugging(__FUNCTION__ . ":" . __LINE__ . ": No CDATA sections in question " . $i + 1, DEBUG_DEVELOPER);
-            $clean_output_string .= $question_matches[$i][0];
-        }
-    } // End question element loop
-
-    debugging(__FUNCTION__ . "() -> " . substr($clean_output_string, 0, 1000) . "..." . substr($clean_output_string, -1000), DEBUG_DEVELOPER);
-    return $clean_output_string;
-}
-
-/**
- * Clean HTML content
- *
- * A string containing clean XHTML is returned
- *
- * @return string
+ * @param string $text_content_string the HTML string to be cleaned
+ * @return string containing clean well-formed XHTML
  */
 function clean_html_text($text_content_string) {
     $tidy_type = "strip_tags";
@@ -253,7 +121,8 @@ function clean_html_text($text_content_string) {
  * A string containing XML with numeric entities. Note that some entities may appear OK in Word, while others don't seem to map properly to Word Unicode.
  * Also note that many numeric entities aren't supported in HTML, so won't appear in the questions, even though they look OK in Word.
  *
- * @return string
+ * @param string $string the HTML string to be cleaned
+ * @return string containing HTML text with all character entities replaced with numeric entities
  */
 function clean_entities($string) {
     debugging(__FUNCTION__ . "(string = " . str_replace("\n", "", substr($string, 0, 100)) . " ...)", DEBUG_DEVELOPER);
