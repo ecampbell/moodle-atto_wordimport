@@ -26,7 +26,6 @@ require(dirname(basename(__FILE__)) . '/../../../../../config.php');
 require_once($CFG->libdir . '/filestorage/file_storage.php');
 require_once($CFG->dirroot . '/repository/lib.php');
 require_once("$CFG->libdir/xmlize.php");
-require(dirname(basename(__FILE__)) . '/util.php');
 require(dirname(basename(__FILE__)) . '/lib.php');
 // Include XSLT processor functions
 require_once(dirname(basename(__FILE__)) . "/xsl_emulate_xslt.inc");
@@ -59,9 +58,12 @@ debugging(basename(__FILE__) . " (" . __LINE__ . "): tmp_filename = " . $tmp_fil
 $html_text = convert_to_xhtml($tmp_filename);
 $html_text = get_html_body($html_text);
 
+// Delete the temporary file now that we're finished with it.
+debug_unlink($tmp_filename);
+
 if (($json_text = json_encode($html_text)) === FALSE) {
     debugging(basename(__FILE__) . " (" . __LINE__ . "): JSON encoding failed ", DEBUG_DEVELOPER);
-    echo '{"error": "Conversion failed"}';
+    echo '{"error": "' . get_string('transformationfailed', 'atto_wordimport') . '"}';
 } else {
     debugging(basename(__FILE__) . " (" . __LINE__ . "): json_text = " . str_replace(substr($json_text, 0, 500), "\n", " "), DEBUG_DEVELOPER);
     echo "{\"html\": " . $json_text . "}";

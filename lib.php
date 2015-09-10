@@ -191,11 +191,7 @@ function convert_to_xhtml($filename) {
 
     // Pass 1 - convert WordML into linear XHTML
     // Create a temporary file to store the merged WordML XML content to transform
-    if (!($temp_wordml_filename = tempnam($CFG->dataroot . '/temp/', "awi-"))) {
-        debugging(__FUNCTION__ . ":" . __LINE__ . ": Cannot open temporary file ('$temp_wordml_filename') to store XML", DEBUG_DEVELOPER);
-        //echo $OUTPUT->notification(get_string('cannotopentempfile', 'atto_wordimport', $temp_wordml_filename));
-        return false;
-    }
+    $temp_wordml_filename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".wml";
 
     // Write the WordML contents to be imported
     if (($nbytes = file_put_contents($temp_wordml_filename, $wordmlData)) == 0) {
@@ -220,7 +216,7 @@ function convert_to_xhtml($filename) {
     $xslt_output = str_replace(' xmlns=""', '', $xslt_output);
 
     // Write output of Pass 1 to a temporary file, for use in Pass 2
-    $temp_xhtml_filename = $CFG->dataroot . '/temp/' . basename($temp_wordml_filename, ".tmp") . ".if1";
+    $temp_xhtml_filename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".if1";
     if (($nbytes = file_put_contents($temp_xhtml_filename, $xslt_output )) == 0) {
         debugging(__FUNCTION__ . ":" . __LINE__ . ": Failed to save XHTML data to temporary file ('$temp_xhtml_filename')", DEBUG_DEVELOPER);
         //echo $OUTPUT->notification(get_string('cannotwritetotempfile', 'atto_wordimport', $temp_xhtml_filename . "(" . $nbytes . ")"));
@@ -242,23 +238,14 @@ function convert_to_xhtml($filename) {
     debug_unlink($temp_xhtml_filename);
     debugging(__FUNCTION__ . ":" . __LINE__ . ": Import Pass 2 succeeded, XHTML output fragment = " . str_replace("\n", "", substr($xslt_output, 600, 500)), DEBUG_DEVELOPER);
 
-    // Write the Pass 2 XHTML output to a temporary file
-    $temp_xhtml_filename = $CFG->dataroot . '/temp/' . basename($temp_wordml_filename, ".tmp") . ".if2";
-    if (($nbytes = file_put_contents($temp_xhtml_filename, $xslt_output)) == 0) {
-        debugging(__FUNCTION__ . ":" . __LINE__ . ": Failed to save XHTML data to temporary file ('$temp_xhtml_filename')", DEBUG_DEVELOPER);
-        //echo $OUTPUT->notification(get_string('cannotwritetotempfile', 'atto_wordimport', $temp_xhtml_filename . "(" . $nbytes . ")"));
-        return false;
-    }
-    debugging(__FUNCTION__ . ":" . __LINE__ . ": Pass 2 output XHTML data saved to $temp_xhtml_filename", DEBUG_DEVELOPER);
-    //file_put_contents($CFG->dataroot . '/temp/' . basename($temp_wordml_filename, ".tmp") . ".if2", "<pass3Container>\n" . $xslt_output . get_text_labels() . "\n</pass3Container>");
 
-    // Keep the original Word file for debugging if developer debugging enabled
+    // Keep the converted XHTML file for debugging if developer debugging enabled
     if (debugging(null, DEBUG_DEVELOPER)) {
-        $copied_input_file = $CFG->dataroot . '/temp/' . basename($filename);
-        copy($filename, $copied_input_file);
-        debugging(__FUNCTION__ . ":" . __LINE__ . ": Copied $filename to $copied_input_file", DEBUG_DEVELOPER);
+        $temp_xhtml_filename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".xhtml";
+        if (($nbytes = file_put_contents($temp_xhtml_filename, $xslt_output)) == 0) {
+            return false;
+        }
     }
-
 
     return $xslt_output;
 }   // end convert_to_xhtml
@@ -287,4 +274,14 @@ function get_html_body($xhtml_string) {
     debugging(__FUNCTION__ . "() -> |" . str_replace("\n", "", substr($xhtml_body, 0, 100)) . " ...|", DEBUG_DEVELOPER);
     return $xhtml_body;
 }
+
+/*
+ * Delete temporary files if debugging disabled
+ */
+function debug_unlink($filename) {
+    if (!debugging(null, DEBUG_DEVELOPER)) {
+        unlink($filename);
+    }
+}
+
 ?>
