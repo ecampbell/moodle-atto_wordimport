@@ -34,6 +34,7 @@
 
     <xsl:param name="debug_flag" select="0"/>
     <xsl:param name="course_id"/>
+    <xsl:param name="heading_demotion_offset" select="2"/>
 
     <xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
     <xsl:variable name="lowercase" select="'abcdefghijklmnopqrstuvwxyz'"/>
@@ -227,38 +228,14 @@
         </xsl:copy>
     </xsl:template>
     
-    <!-- Convert the Heading1 style into a <h1> element (i.e. question Category) -->
-    <xsl:template match="x:p[@class = 'heading1']" priority="2">
-        <div class="level1">
-            <h1>
-                <xsl:apply-templates select="node()"/>
-            </h1>
-        </div>
+    <!-- Demote Heading styles by the required amount -->
+    <xsl:template match="x:p[starts-with(@class, 'heading')]" priority="2">
+        <xsl:variable name="heading_level" select="substring-after(@class, 'heading')"/>
+        <xsl:variable name="heading_tag" select="concat('h', $heading_level + $heading_demotion_offset)"/>
+        <xsl:element name="{$heading_tag}">
+            <xsl:apply-templates select="node()"/>
+        </xsl:element>
     </xsl:template>
-
-    <!-- Convert the Heading2 style into a <h2> element (i.e. question Name), and wrap it and the following table into a div -->
-    <xsl:template match="x:p[@class = 'heading2']" priority="2">
-        <div class="level2">
-            <h2>
-                <xsl:apply-templates select="node()"/>
-            </h2>
-
-            <!-- Grab the next table following, and put it inside the same div, introducing a simple hierarchy to group the question name and body-->
-            <xsl:apply-templates select="following::x:table[contains(@class, 'moodleQuestion')][1]" mode="moodleQuestion"/>
-        </div>
-    </xsl:template>
-
-    <!-- Handle question tables in moodleQuestion mode, to wrap them inside a div with the previous heading 2 (question name) -->
-    <xsl:template match="x:table[contains(@class, 'moodleQuestion')]" mode="moodleQuestion">
-        <xsl:value-of select="$debug_newline"/>
-        <table class="moodleQuestion">
-            <xsl:apply-templates/>
-        </table>
-    </xsl:template>
-
-    <!-- Delete question tables in normal processing, as they are grabbed by the previous heading 2 style -->
-    <xsl:template match="x:table[contains(@class, 'moodleQuestion')]"/>
-
 
 <!-- Handle simple unnested lists, as long as they use the explicit "List Number" or "List Bullet" styles -->
 

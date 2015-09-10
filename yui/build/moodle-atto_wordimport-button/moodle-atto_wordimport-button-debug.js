@@ -86,14 +86,23 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
      * @private
      */
     _handleWordFileUpload: function(params) {
+        var host = this.get('host'),
+            fpoptions = host.get('filepickeroptions'),
+            context = "",
+            options = fpoptions.link;
+
         if (params.url === '') {
             Y.log('URL is null');
             return false;
         }
         Y.log('URL is ' + params.url);
-        Y.log('M.cfg.wwwroot = ' + M.cfg.wwwroot);
-        Y.log('File is ' + params.file + '; ' + M.util.get_string('pluginname', COMPONENTNAME));
-        if (/docx$/.test(params.file) === false) {
+        //Y.log('M.cfg.wwwroot = ' + M.cfg.wwwroot);
+        // Grab the context ID from the URL, as it doesn't seem to be correct in options
+        context = params.url.replace(/.*\/draftfile.php\/([0-9]*)\/.*/i, "$1");
+        Y.log('Param file = ' + params.file + '; context = ' + context);
+
+        // Return if selected file doesn't have Word 2010 suffix
+        if (/\.doc[xm]$/.test(params.file) === false) {
             Y.log(M.util.get_string('xmlnotsupported', COMPONENTNAME) + params.file);
             return false;
         }
@@ -104,7 +113,6 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
         xhr.onreadystatechange = function() {
             var placeholder = self.editor.one('#myhtml'),
                 result,
-                file,
                 newcontent;
 
             if (xhr.readyState === 4) {
@@ -118,14 +126,14 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                             return new M.core.ajaxException(result);
                         }
 
-                        file = result;
+                        //file = result;
 
-                        // Replace placeholder with actual image.
+                        // Replace placeholder with content from file
                         newcontent = Y.Node.create(result.html);
                         if (placeholder) {
-                            placeholder.replace(result.html);
+                            placeholder.replace(newcontent);
                         } else {
-                            self.editor.appendChild(result.html);
+                            self.editor.appendChild(newcontent);
                         }
                         self.markUpdated();
                     }
@@ -139,7 +147,12 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                 }
             }
         };
-        xhr.open("GET", M.cfg.wwwroot + '/lib/editor/atto/plugins/wordimport/import.php?wordfileurl=' + params.url, true);
+
+        var contextID = 'ctx_id=' + context,
+            itemid = 'itemid=' + options.itemid,
+            phpImportURL = '/lib/editor/atto/plugins/wordimport/import.php?';
+        Y.log('File info: ' + contextID + ';' + itemid);
+        xhr.open("GET", M.cfg.wwwroot + phpImportURL + contextID + '&' + itemid, true);
         xhr.send();
 
         return true;
@@ -209,9 +222,11 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                     newimage;
 
                 if (xhr.readyState === 4) {
+                    Y.log('xhr status = ' + xhr.status);
                     if (xhr.status === 200) {
                         result = JSON.parse(xhr.responseText);
                         if (result) {
+                            Y.log('JSON result error status = ' + result.error);
                             if (result.error) {
                                 if (placeholder) {
                                     placeholder.remove(true);
@@ -219,6 +234,7 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                                 return new M.core.ajaxException(result);
                             }
 
+                            Y.log('JSON result OK, result = ' + result);
                             file = result;
                             if (result.event && result.event === 'fileexists') {
                                 // A file with this name is already in use here - rename to avoid conflict.
@@ -247,8 +263,8 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
             };
             xhr.open("POST", M.cfg.wwwroot + '/repository/repository_ajax.php?action=upload', true);
             xhr.send(formData);
+            Y.log('File sent');
         }
-        Y.log('File type test failed: ' + e.dataTransfer.files[0].type);
         return false;
 
     }

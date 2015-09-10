@@ -86,10 +86,19 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
      * @private
      */
     _handleWordFileUpload: function(params) {
+        var host = this.get('host'),
+            fpoptions = host.get('filepickeroptions'),
+            context = "",
+            options = fpoptions.link;
+
         if (params.url === '') {
             return false;
         }
-        if (/docx$/.test(params.file) === false) {
+        // Grab the context ID from the URL, as it doesn't seem to be correct in options
+        context = params.url.replace(/.*\/draftfile.php\/([0-9]*)\/.*/i, "$1");
+
+        // Return if selected file doesn't have Word 2010 suffix
+        if (/\.doc[xm]$/.test(params.file) === false) {
             return false;
         }
 
@@ -99,7 +108,6 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
         xhr.onreadystatechange = function() {
             var placeholder = self.editor.one('#myhtml'),
                 result,
-                file,
                 newcontent;
 
             if (xhr.readyState === 4) {
@@ -113,14 +121,14 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                             return new M.core.ajaxException(result);
                         }
 
-                        file = result;
+                        //file = result;
 
-                        // Replace placeholder with actual image.
+                        // Replace placeholder with content from file
                         newcontent = Y.Node.create(result.html);
                         if (placeholder) {
-                            placeholder.replace(result.html);
+                            placeholder.replace(newcontent);
                         } else {
-                            self.editor.appendChild(result.html);
+                            self.editor.appendChild(newcontent);
                         }
                         self.markUpdated();
                     }
@@ -134,7 +142,11 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                 }
             }
         };
-        xhr.open("GET", M.cfg.wwwroot + '/lib/editor/atto/plugins/wordimport/import.php?wordfileurl=' + params.url, true);
+
+        var contextID = 'ctx_id=' + context,
+            itemid = 'itemid=' + options.itemid,
+            phpImportURL = '/lib/editor/atto/plugins/wordimport/import.php?';
+        xhr.open("GET", M.cfg.wwwroot + phpImportURL + contextID + '&' + itemid, true);
         xhr.send();
 
         return true;
