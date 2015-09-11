@@ -2,6 +2,7 @@ Release notes
 -------------
 
 Date          Version   Comment
+2015/09/11    0.0.5     Add support for importing images
 2015/09/10    0.0.4     First draft of working Word file import by dialog box
 2015/08/13    0.0.3     First draft of working JavaScript
 2015/07/25    0.0.1     Initial set of files copied from https://github.com/justinhunt/moodle-atto_newtemplate and Moodle atto image handling conversion to be done.

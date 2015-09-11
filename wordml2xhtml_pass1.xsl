@@ -4757,7 +4757,7 @@
             <xsl:choose>
             <xsl:when test="$img_rid != ''">
                 <!-- Dereference the reference ID field to get the file name, and map to the src attribute -->
-                <xsl:value-of select="concat('data:', $imagesContainer/file[@filename = $img_filename]/@mime-type, ';base64,', $imagesContainer/file[@filename = $img_filename])"/>
+                <xsl:value-of select="$imagesContainer/file[@filename = $img_filename]"/>
             </xsl:when>
             <xsl:when test="$img_external_rid != ''">
                 <!-- External image, so just keep the URL -->

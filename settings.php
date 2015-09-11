@@ -29,7 +29,7 @@ $ADMIN->add('editoratto', new admin_category('atto_wordimport', new lang_string(
 
 $settings = new admin_settingpage('atto_wordimport_settings', new lang_string('settings', 'atto_wordimport'));
 if ($ADMIN->fulltree) {
-	// An option setting
-	$settings->add(new admin_setting_configtext('atto_wordimport/defaultflavor', 
-		get_string('defaultflavor', 'atto_wordimport'), '', 'vanilla', PARAM_TEXT));
+    // An option setting
+    $settings->add(new admin_setting_configtext('atto_wordimport/defaultflavor', 
+        get_string('defaultflavor', 'atto_wordimport'), '', 'vanilla', PARAM_TEXT));
 }

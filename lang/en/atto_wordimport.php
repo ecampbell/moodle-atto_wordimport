@@ -41,7 +41,7 @@ $string['settings'] = 'Word Import (Atto)';
 $string['uploading'] = 'Uploading, please wait...';
 $string['visible'] = 'Visible';
 
-// Strings used in import.php
+// Strings used in import.php.
 $string['cannotopentempfile'] = 'Cannot open temporary file <b>{$a}</b>';
 $string['cannotreadzippedfile'] = 'Cannot read Zipped file <b>{$a}</b>';
 $string['cannotwritetotempfile'] = 'Cannot write to temporary file <b>{$a}</b>';
@@ -49,7 +49,7 @@ $string['stylesheetunavailable'] = 'XSLT Stylesheet <b>{$a}</b> is not available
 $string['transformationfailed'] = 'XSLT transformation failed (<b>{$a}</b>)';
 $string['xsltunavailable'] = 'You need the XSLT library installed in PHP to save this Word file';
 
-// Strings used in JavaScript
+// Strings used in JavaScript.
 $string['xmlnotsupported'] = 'Files in XML format not supported: <b>{$a}</b>';
 $string['docnotsupported'] = 'Files in Word 2003 format not supported: <b>{$a}</b>, use Moodle2Word 3.x instead';
 $string['htmlnotsupported'] = 'Files in HTML format not supported: <b>{$a}</b>';

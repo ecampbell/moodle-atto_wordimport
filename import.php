@@ -27,7 +27,7 @@ require_once($CFG->libdir . '/filestorage/file_storage.php');
 require_once($CFG->dirroot . '/repository/lib.php');
 require_once("$CFG->libdir/xmlize.php");
 require(dirname(basename(__FILE__)) . '/lib.php');
-// Include XSLT processor functions
+// Include XSLT processor functions.
 require_once(dirname(basename(__FILE__)) . "/xsl_emulate_xslt.inc");
 
 
@@ -37,38 +37,33 @@ $contextid = required_param('ctx_id', PARAM_INT);
 $context = context::instance_by_id($contextid);
 $PAGE->set_context($context);
 
-
-// Get the reference of the uploaded file, save it as a temporary file, and then delete it from the files table
+// Get the reference of the uploaded file, save it as a temporary file, and then delete it from the files table.
 $fs = get_file_storage();
 $filearray = $fs->get_area_files($contextid, 'user', 'draft', $itemid);
-foreach($filearray as $file) {
+foreach ($filearray as $file) {
     if ($file->is_directory()) {
         continue;
     }
-    $tmp_filename = $file->copy_content_to_temp();
-    //debugging(basename(__FILE__) . " (" . __LINE__ . "): tmp_filename " . $file->get_filename() . " saved to " . $tmp_filename, DEBUG_DEVELOPER);
+    $tmpfilename = $file->copy_content_to_temp();
+    debugging(basename(__FILE__) . " (" . __LINE__ . "): tmp_filename = " . $tmpfilename, DEBUG_DEVELOPER);
 }
 $filearray = $fs->delete_area_files($contextid, 'user', 'draft', $itemid);
 
-
-debugging(basename(__FILE__) . " (" . __LINE__ . "): tmp_filename = " . $tmp_filename, DEBUG_DEVELOPER);
-//echo "{\"html\": \"" . $tmp_filename . "\"}";
-//exit;
-
-$html_text = convert_to_xhtml($tmp_filename);
-$html_text = get_html_body($html_text);
+// Convert the Word file into XHTML, and then grab just the <body> content.
+$htmltext = convert_to_xhtml($tmpfilename, $contextid);
+$htmltext = get_html_body($htmltext);
+$jsontext = json_encode($htmltext);
 
 // Delete the temporary file now that we're finished with it.
-debug_unlink($tmp_filename);
+debug_unlink($tmpfilename);
 
-if (($json_text = json_encode($html_text)) === FALSE) {
+// Return the XHTML in JSON-encoded format, if it was encoded OK.
+$jsontext = json_encode($htmltext);
+if ($jsontext === false) {
     debugging(basename(__FILE__) . " (" . __LINE__ . "): JSON encoding failed ", DEBUG_DEVELOPER);
     echo '{"error": "' . get_string('transformationfailed', 'atto_wordimport') . '"}';
 } else {
-    debugging(basename(__FILE__) . " (" . __LINE__ . "): json_text = " . str_replace(substr($json_text, 0, 500), "\n", " "), DEBUG_DEVELOPER);
-    echo "{\"html\": " . $json_text . "}";
+    debugging(basename(__FILE__) . " (" . __LINE__ . "): jsontext = |" . 
+        str_replace("\n", " ", substr($jsontext, 0, 500)) . "...|", DEBUG_DEVELOPER);
+    echo "{\"html\": " . $jsontext . "}";
 }
-
-
-
-?>
