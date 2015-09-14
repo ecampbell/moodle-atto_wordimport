@@ -136,6 +136,7 @@ function convert_to_xhtml($filename, $contextid) {
                         ' with itemid = ' . $fileinfo['itemid'], DEBUG_DEVELOPER);
 
                     $imageurl = $CFG->wwwroot . '/draftfile.php/' . $contextid . '/user/draft/' . $fileinfo['itemid'] . '/' . $fileinfo['filename'];
+//                    $imageurl = $CFG->wwwroot . '/draftfile.php/' . $contextid . '/user/draft/' . $fileinfo['itemid'] . '/' . $fileinfo['filename'];                    // $imageurl = '@@PLUGINFILE@@/' . $fileinfo['filename'];
                     if ($imagesuffix == 'jpg' or $imagesuffix == 'jpeg') {
                         $imagemimetype .= "jpeg";
                     }
@@ -219,9 +220,6 @@ function convert_to_xhtml($filename, $contextid) {
     }
     debug_unlink($tempwordmlfilename);
     debugging(__FUNCTION__ . ":" . __LINE__ . ": Import XSLT Pass 1 succeeded, XHTML output fragment = " . str_replace("\n", "", substr($xsltoutput, 0, 200)), DEBUG_DEVELOPER);
-    // Strip out superfluous namespace declarations on paragraph elements, which Moodle 2.7/2.8 on Windows seems to throw in.
-    $xsltoutput = str_replace(' xmlns="http://www.w3.org/1999/xhtml"', '', $xsltoutput);
-    $xsltoutput = str_replace(' xmlns=""', '', $xsltoutput);
 
     // Write output of Pass 1 to a temporary file, for use in Pass 2.
     $tempxhtmlfilename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".if1";
@@ -243,6 +241,9 @@ function convert_to_xhtml($filename, $contextid) {
     debug_unlink($tempxhtmlfilename);
     debugging(__FUNCTION__ . ":" . __LINE__ . ": Import Pass 2 succeeded, XHTML output fragment = " . str_replace("\n", "", substr($xsltoutput, 600, 500)), DEBUG_DEVELOPER);
 
+    // Strip out superfluous namespace declarations on paragraph elements, which Moodle 2.7+ on Windows seems to throw in.
+    $xsltoutput = str_replace('<p xmlns="http://www.w3.org/1999/xhtml"', '<p', $xsltoutput);
+    $xsltoutput = str_replace(' xmlns=""', '', $xsltoutput);
     // Keep the converted XHTML file for debugging if developer debugging enabled.
     if (debugging(null, DEBUG_DEVELOPER)) {
         $tempxhtmlfilename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".xhtml";
