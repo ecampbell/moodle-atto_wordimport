@@ -104,7 +104,7 @@ function convert_to_xhtml($filename, $contextid) {
         'filepath' => '/',
         'filename' => ''
         );
-
+    $imagestring = "";
     // Open the Word 2010 Zip-formatted file and extract the WordProcessingML XML files.
     $zfh = zip_open($filename);
     if ($zfh) {
@@ -127,25 +127,23 @@ function convert_to_xhtml($filename, $contextid) {
                     if ($imagesuffix == 'gif' or $imagesuffix == 'png') {
                         $imagemimetype .= $imagesuffix;
                     }
-
-                    // 
-                    $fileinfo['filename'] = $imagename;
-                    $fileinfo['itemid'] = file_get_unused_draft_itemid();
-                    $fs->create_file_from_string($fileinfo, $imagedata);
-                    debugging(__FUNCTION__ . ":" . __LINE__ . ": created file " . $fileinfo['filename'] . 
-                        ' with itemid = ' . $fileinfo['itemid'], DEBUG_DEVELOPER);
-
-                    $imageurl = $CFG->wwwroot . '/draftfile.php/' . $contextid . '/user/draft/' . $fileinfo['itemid'] . '/' . $fileinfo['filename'];
-//                    $imageurl = $CFG->wwwroot . '/draftfile.php/' . $contextid . '/user/draft/' . $fileinfo['itemid'] . '/' . $fileinfo['filename'];                    // $imageurl = '@@PLUGINFILE@@/' . $fileinfo['filename'];
                     if ($imagesuffix == 'jpg' or $imagesuffix == 'jpeg') {
                         $imagemimetype .= "jpeg";
                     }
-                    // Handle recognised Internet formats only.
+
+                    // Store only recognised Internet image formats in the database.
                     if ($imagemimetype != '') {
-                        debugging(__FUNCTION__ . ":" . __LINE__ . ": media file name = $zefilename, imagename = " .
-                            $imagename . ", imagesuffix = $imagesuffix, imagemimetype = $imagemimetype", DEBUG_DEVELOPER);
-                        $imagestring .= '<file filename="media/' . $imagename . '" mime-type="' . $imagemimetype 
-                            . '">' . $imageurl . "</file>\n";
+                        // Prepare the file details for storage
+                        $fileinfo['filename'] = $imagename;
+                        $fileinfo['itemid'] = file_get_unused_draft_itemid();
+                        $fs->create_file_from_string($fileinfo, $imagedata);
+                        debugging(__FUNCTION__ . ":" . __LINE__ . ": stored \"" . $fileinfo['filename'] . 
+                            '\" with itemid = ' . $fileinfo['itemid'], DEBUG_DEVELOPER);
+
+                        $imageurl = $CFG->wwwroot . '/draftfile.php/' . $contextid . '/user/draft/' . $fileinfo['itemid'] . '/' . $fileinfo['filename'];
+                        $imagestring .= "<file filename=\"media/{$imagename}\" mime-type=\"{$imagemimetype}\"";
+                        $imagestring .= " contextid=\"{$contextid}\" itemid=\"{$fileinfo['itemid']}\"";
+                        $imagestring .= " name=\"{$fileinfo['filename']}\" url=\"{$imageurl}\">{$imageurl}</file>\n";
                     }
                     else {
                         debugging(__FUNCTION__ . ":" . __LINE__ . ": ignore unsupported media file name $zefilename, imagename " .

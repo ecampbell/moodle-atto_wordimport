@@ -49,21 +49,42 @@ foreach ($filearray as $file) {
 }
 $filearray = $fs->delete_area_files($contextid, 'user', 'draft', $itemid);
 
-// Convert the Word file into XHTML, and then grab just the <body> content.
+// Convert the Word file into XHTML with images.
 $htmltext = convert_to_xhtml($tmpfilename, $contextid);
-$htmltext = get_html_body($htmltext);
-$jsontext = json_encode($htmltext);
 
-// Delete the temporary file now that we're finished with it.
-debug_unlink($tmpfilename);
+// Handle the images by encoding them as JSON items.
+$imagescontainerstart = stripos($htmltext, '<imagesContainer>') + strlen('<imagesContainer>');
+$imagescontainerend = stripos($htmltext, '</imagesContainer>');
+$imagesstring = "";
+debugging(basename(__FILE__) . " (" . __LINE__ . "): imagescontainerend: {$imagescontainerend}, imagescontainerstart {$imagescontainerstart}", DEBUG_DEVELOPER);
+if ($imagescontainerend - $imagescontainerstart > 2) {
+    // "filename="media/image1.jpg" mime-type="image/jpeg" contextid="5" itemid="693725586" name="image1.jpg" url="http://localhost/m29/draftfile.php/5/user/draft/693725586/image1.jpg"
+    $n_matches = preg_match_all('|<file filename="media/([^"]*)" mime-type="image/([^"]*)" contextid="([^"]*)" itemid="([^"]*)" name="([^"]*)" url="([^"]*)"/>|', substr($htmltext, $imagescontainerstart), $imagefiles, PREG_SET_ORDER);
+    debugging(basename(__FILE__) . " (" . __LINE__ . "): image file n_matches: \"{$n_matches}\"", DEBUG_DEVELOPER);
+    if ($n_matches !== false) {
+        foreach ($imagefiles as $file) {
+            $imagestring = "\"url\": " . json_encode($file[6]) . ",";
+            $imagestring .= "\"id\":\"{$file[4]}\",\"name\":\"{$file[5]}\"";
+            $imagesstring .= $imagestring;
+            debugging(basename(__FILE__) . " (" . __LINE__ . "): image file details: \"{$imagestring}\"", DEBUG_DEVELOPER);
+        }
+    }
+}
+
+// Get the content inside the HTML body tags only, ignore metadata for now.
+$htmltext = get_html_body($htmltext);
 
 // Return the XHTML in JSON-encoded format, if it was encoded OK.
-$jsontext = json_encode($htmltext);
-if ($jsontext === false) {
+$htmltextjson = json_encode($htmltext);
+if ($htmltextjson === false) {
     debugging(basename(__FILE__) . " (" . __LINE__ . "): JSON encoding failed ", DEBUG_DEVELOPER);
     echo '{"error": "' . get_string('transformationfailed', 'atto_wordimport') . '"}';
 } else {
     debugging(basename(__FILE__) . " (" . __LINE__ . "): jsontext = |" . 
-        str_replace("\n", " ", substr($jsontext, 0, 500)) . "...|", DEBUG_DEVELOPER);
-    echo "{\"html\": " . $jsontext . "}";
+        str_replace("\n", " ", substr($htmltextjson, 0, 500)) . "...|", DEBUG_DEVELOPER);
+    echo "{\"html\": " . $htmltextjson . "," . $imagesstring . "}";
+
+// Delete the temporary file now that we're finished with it.
+debug_unlink($tmpfilename);
+
 }

@@ -4611,6 +4611,7 @@
                         </xsl:for-each>
                         <xsl:value-of select="$debug_newline"/>
                     </imagesContainer>
+                    <xsl:value-of select="$debug_newline"/>
                 </xsl:if>
                 <!-- Image relationships from file word/_rels/document.xml.rels -->
                 <xsl:if test="$debug_flag &gt; 1">
@@ -4703,6 +4704,7 @@
                     </xsl:if>
                 </div>
             </body>
+            <xsl:apply-templates select="//imagesContainer"/>
         </html>
     </xsl:template>
     
@@ -4840,7 +4842,7 @@
     </xsl:template>
 
 
-    <xsl:template match="imagesContainer|customProps">
+    <xsl:template match="customProps">
     <!--
         <xsl:comment>
             <xsl:value-of select="concat(name(), ' Container deleted')"/>
