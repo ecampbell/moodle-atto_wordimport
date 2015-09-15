@@ -23,6 +23,8 @@
  */
 
 require(dirname(basename(__FILE__)) . '/../../../../../config.php');
+// Include XSLT processor functions.
+require_once(dirname(basename(__FILE__)) . "/xsl_emulate_xslt.inc");
 require(dirname(basename(__FILE__)) . '/lib.php');
 
 $itemid = required_param('itemid', PARAM_INT);
@@ -39,7 +41,7 @@ foreach ($filearray as $file) {
         continue;
     }
     $tmpfilename = $file->copy_content_to_temp();
-    debugging(basename(__FILE__) . " (" . __LINE__ . "): tmp_filename = " . $tmpfilename, DEBUG_DEVELOPER);
+    debugging(basename(__FILE__) . " (" . __LINE__ . "): tmp_filename = " . $tmpfilename, DEBUG_WORDIMPORT);
 }
 $filearray = $fs->delete_area_files($contextid, 'user', 'draft', $itemid);
 
@@ -52,11 +54,11 @@ $htmltext = atto_wordimport_get_html_body($htmltext);
 // Return the XHTML in JSON-encoded format, if it was encoded OK.
 $htmltextjson = json_encode($htmltext);
 if ($htmltextjson === false) {
-    debugging(basename(__FILE__) . " (" . __LINE__ . "): JSON encoding failed ", DEBUG_DEVELOPER);
+    debugging(basename(__FILE__) . " (" . __LINE__ . "): JSON encoding failed ", DEBUG_WORDIMPORT);
     echo '{"error": "' . get_string('transformationfailed', 'atto_wordimport') . '"}';
 } else {
     debugging(basename(__FILE__) . " (" . __LINE__ . "): jsontext = |" .
-        str_replace("\n", " ", substr($htmltextjson, 0, 500)) . "...|", DEBUG_DEVELOPER);
+        str_replace("\n", " ", substr($htmltextjson, 0, 500)) . "...|", DEBUG_WORDIMPORT);
     echo "{\"html\": " . $htmltextjson . "}";
 
 // Delete the temporary file now that we're finished with it.

@@ -34,7 +34,7 @@
  * @extends M.editor_atto.EditorPlugin
  */
 
-var COMPONENTNAME = 'att_wordimport';
+var COMPONENTNAME = 'atto_wordimport';
 
 Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
     /**
@@ -65,11 +65,11 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
     initializer: function() {
 
         this.addButton({
-            icon: 'f/document',
+            icon: 'wordimport',
+            iconComponent: COMPONENTNAME,
             callback: function() {
                     this.get('host').showFilepicker('link', this._handleWordFileUpload, this);
             },
-            buttonName: 'iconone',
             callbackArgs: 'wordimport'
         });
         this.editor.on('drop', this._handleWordFileDragDrop, this);
