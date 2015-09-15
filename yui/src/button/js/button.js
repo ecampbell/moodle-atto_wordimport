@@ -70,6 +70,7 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
             callback: function() {
                     this.get('host').showFilepicker('link', this._handleWordFileUpload, this);
             },
+            title: 'importfile',
             callbackArgs: 'wordimport'
         });
         this.editor.on('drop', this._handleWordFileDragDrop, this);

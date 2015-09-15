@@ -28,16 +28,10 @@ $string['cancel'] = 'Cancel';
 $string['converting'] = 'Importing, please wait...';
 $string['createword'] = 'Create Word Import';
 $string['customstyle'] = 'Custom style';
-$string['defaultflavor'] = 'Default Ice Cream Flavor';
-$string['dialogtitle'] = 'Enter Preferences';
-$string['enteralt'] = 'Describe this image for someone who cannot see it';
-$string['enterflavor'] = 'Enter Ice Cream Flavor';
-$string['enterurl'] = 'Enter URL';
 $string['importfile'] = 'Import Word file';
 $string['insert'] = 'Insert';
 $string['nothingtoinsert'] = 'Nothing to insert!';
 $string['pluginname'] = 'Word import (Atto)';
-$string['settings'] = 'Word Import (Atto)';
 $string['uploading'] = 'Uploading, please wait...';
 $string['visible'] = 'Visible';
 
