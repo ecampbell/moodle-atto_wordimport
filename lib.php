@@ -24,10 +24,17 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->libdir . '/filestorage/file_storage.php');
+require_once($CFG->dirroot . '/repository/lib.php');
+require_once("$CFG->libdir/xmlize.php");
+// Include XSLT processor functions.
+require_once(dirname(basename(__FILE__)) . "/xsl_emulate_xslt.inc");
+
 
 /**
- * Initialise this plugin
- * @param string $elementid
+ * Initialise the strings required for js
+ *
+ * @return void
  */
 function atto_wordimport_strings_for_js() {
     global $PAGE;
@@ -51,14 +58,15 @@ function atto_wordimport_strings_for_js() {
  * Extract the WordProcessingML XML files from the .docx file, and use a sequence of XSLT
  * steps to convert it into XHTML
  *
+ * @param $contextid ID of draft file area where images should be stored
  * @param $filename name of file uploaded to file repository as a draft
  * @return string XHTML content extracted from Word file
  */
-function convert_to_xhtml($filename, $contextid) {
+function atto_wordimport_convert_to_xhtml($filename, $contextid) {
     global $CFG, $OUTPUT;
 
-    $word2mqxmlstylesheet1 = 'wordml2xhtml_pass1.xsl';      // Convert WordML into basic XHTML
-    $word2mqxmlstylesheet2 = 'wordml2xhtml_pass2.xsl';      // Refine basic XHTML into Word-compatible XHTML
+    $word2mqxmlstylesheet1 = 'wordml2xhtml_pass1.xsl';      // Convert WordML into basic XHTML.
+    $word2mqxmlstylesheet2 = 'wordml2xhtml_pass2.xsl';      // Refine basic XHTML into Word-compatible XHTML.
 
     debugging(__FUNCTION__ . ":" . __LINE__ . ": Word file = $filename", DEBUG_DEVELOPER);
     // Give XSLT as much memory as possible, to enable larger Word files to be imported.
@@ -70,19 +78,19 @@ function convert_to_xhtml($filename, $contextid) {
     // Check that XSLT is installed, and the XSLT stylesheet is present.
     if (!class_exists('XSLTProcessor') || !function_exists('xslt_create')) {
         debugging(__FUNCTION__ . " (" . __LINE__ . "): XSLT not installed", DEBUG_DEVELOPER);
-        //echo $OUTPUT->notification(get_string('xsltunavailable', 'atto_wordimport'));
+        // echo $OUTPUT->notification(get_string('xsltunavailable', 'atto_wordimport'));
         return false;
     } else if (!file_exists($stylesheet)) {
         // XSLT stylesheet to transform WordML into XHTML doesn't exist.
         debugging(__FUNCTION__ . " (" . __LINE__ . "): XSLT stylesheet missing: $stylesheet", DEBUG_DEVELOPER);
-        //echo $OUTPUT->notification(get_string('stylesheetunavailable', 'atto_wordimport', $stylesheet));
+        // echo $OUTPUT->notification(get_string('stylesheetunavailable', 'atto_wordimport', $stylesheet));
         return false;
     }
 
     // Set common parameters for all XSLT transformations.
     $parameters = array (
         'moodle_language' => current_language(),
-        'moodle_textdirection' => (right_to_left())? 'rtl': 'ltr',
+        'moodle_textdirection' => (right_to_left()) ? 'rtl' : 'ltr',
         'moodle_release' => $CFG->release,
         'moodle_url' => $CFG->wwwroot . "/",
         'debug_flag' => debugging('', DEBUG_DEVELOPER)
@@ -114,10 +122,10 @@ function convert_to_xhtml($filename, $contextid) {
             if (zip_entry_open($zfh, $zipentry, "r")) {
                 $zefilename = zip_entry_name($zipentry);
                 $zefilesize = zip_entry_filesize($zipentry);
-                debugging(__FUNCTION__ . ":" . __LINE__ . ": zip_entry_name = $zefilename, size = $zefilesize", DEBUG_DEVELOPER);
+                // debugging(__FUNCTION__ . ":" . __LINE__ . ": zip_entry_name = $zefilename, size = $zefilesize", DEBUG_DEVELOPER);
 
                 // Insert internal images into the files table.
-                if (strpos($zefilename, "media")) { 
+                if (strpos($zefilename, "media")) {
                     $imageformat = substr($zefilename, strrpos($zefilename, ".") +1);
                     $imagedata = zip_entry_read($zipentry, $zefilesize);
                     $imagename = basename($zefilename);
@@ -137,15 +145,16 @@ function convert_to_xhtml($filename, $contextid) {
                         $fileinfo['filename'] = $imagename;
                         $fileinfo['itemid'] = file_get_unused_draft_itemid();
                         $fs->create_file_from_string($fileinfo, $imagedata);
-                        debugging(__FUNCTION__ . ":" . __LINE__ . ": stored \"" . $fileinfo['filename'] . 
+                        debugging(__FUNCTION__ . ":" . __LINE__ . ": stored \"" . $fileinfo['filename'] .
                             '\" with itemid = ' . $fileinfo['itemid'], DEBUG_DEVELOPER);
 
-                        $imageurl = $CFG->wwwroot . '/draftfile.php/' . $contextid . '/user/draft/' . $fileinfo['itemid'] . '/' . $fileinfo['filename'];
+                        $imageurl = $CFG->wwwroot . '/draftfile.php/' . $contextid . '/user/draft/' .
+                            $fileinfo['itemid'] . '/' . $fileinfo['filename'];
+                        // Return all the details of where the file is stored, even though we don't need them at the moment.
                         $imagestring .= "<file filename=\"media/{$imagename}\" mime-type=\"{$imagemimetype}\"";
                         $imagestring .= " contextid=\"{$contextid}\" itemid=\"{$fileinfo['itemid']}\"";
                         $imagestring .= " name=\"{$fileinfo['filename']}\" url=\"{$imageurl}\">{$imageurl}</file>\n";
-                    }
-                    else {
+                    } else {
                         debugging(__FUNCTION__ . ":" . __LINE__ . ": ignore unsupported media file name $zefilename, imagename " .
                             " = $imagename, imagesuffix = $imagesuffix, imagemimetype = $imagemimetype", DEBUG_DEVELOPER);
                     }
@@ -153,31 +162,39 @@ function convert_to_xhtml($filename, $contextid) {
                     // Look for required XML files, read and wrap it, remove the XML declaration, and add it to the XML string.
                     switch ($zefilename) {
                         case "word/document.xml":
-                            $wordmldata .= "<wordmlContainer>" . str_replace($xmldeclaration, "", zip_entry_read($zipentry, $zefilesize)) . "</wordmlContainer>\n";
+                            $wordmldata .= "<wordmlContainer>" . str_replace($xmldeclaration, "",
+                                zip_entry_read($zipentry, $zefilesize)) . "</wordmlContainer>\n";
                             break;
                         case "docProps/core.xml":
-                            $wordmldata .= "<dublinCore>" . str_replace($xmldeclaration, "", zip_entry_read($zipentry, $zefilesize)) . "</dublinCore>\n";
+                            $wordmldata .= "<dublinCore>" . str_replace($xmldeclaration, "",
+                                zip_entry_read($zipentry, $zefilesize)) . "</dublinCore>\n";
                             break;
                         case "docProps/custom.xml":
-                            $wordmldata .= "<customProps>" . str_replace($xmldeclaration, "", zip_entry_read($zipentry, $zefilesize)) . "</customProps>\n";
+                            $wordmldata .= "<customProps>" . str_replace($xmldeclaration, "",
+                                zip_entry_read($zipentry, $zefilesize)) . "</customProps>\n";
                             break;
                         case "word/styles.xml":
-                            $wordmldata .= "<styleMap>" . str_replace($xmldeclaration, "", zip_entry_read($zipentry, $zefilesize)) . "</styleMap>\n";
+                            $wordmldata .= "<styleMap>" . str_replace($xmldeclaration, "",
+                                zip_entry_read($zipentry, $zefilesize)) . "</styleMap>\n";
                             break;
                         case "word/_rels/document.xml.rels":
-                            $wordmldata .= "<documentLinks>" . str_replace($xmldeclaration, "", zip_entry_read($zipentry, $zefilesize)) . "</documentLinks>\n";
+                            $wordmldata .= "<documentLinks>" . str_replace($xmldeclaration, "",
+                                zip_entry_read($zipentry, $zefilesize)) . "</documentLinks>\n";
                             break;
                         case "word/footnotes.xml":
-                            $wordmldata .= "<footnotesContainer>" . str_replace($xmldeclaration, "", zip_entry_read($zipentry, $zefilesize)) . "</footnotesContainer>\n";
+                            $wordmldata .= "<footnotesContainer>" . str_replace($xmldeclaration, "",
+                                zip_entry_read($zipentry, $zefilesize)) . "</footnotesContainer>\n";
                             break;
                         case "word/_rels/footnotes.xml.rels":
-                            $wordmldata .= "<footnoteLinks>" . str_replace($xmldeclaration, zip_entry_read($zipentry, $zefilesize), "") . "</footnoteLinks>\n";
+                            $wordmldata .= "<footnoteLinks>" . str_replace($xmldeclaration,
+                                zip_entry_read($zipentry, $zefilesize), "") . "</footnoteLinks>\n";
                             break;
                         case "word/_rels/settings.xml.rels":
-                            $wordmldata .= "<settingsLinks>" . str_replace($xmldeclaration, "", zip_entry_read($zipentry, $zefilesize)) . "</settingsLinks>\n";
+                            $wordmldata .= "<settingsLinks>" . str_replace($xmldeclaration, "",
+                                zip_entry_read($zipentry, $zefilesize)) . "</settingsLinks>\n";
                             break;
                         default:
-                            debugging(__FUNCTION__ . ":" . __LINE__ . ": Ignore $zefilename", DEBUG_DEVELOPER);
+                            // debugging(__FUNCTION__ . ":" . __LINE__ . ": Ignore $zefilename", DEBUG_DEVELOPER);
                     }
                 }
             } else { // Can't read the file from the Word .docx file.
@@ -190,7 +207,7 @@ function convert_to_xhtml($filename, $contextid) {
         zip_close($zfh);
     } else { // Can't open the Word .docx file for reading.
         debugging(__FUNCTION__ . ":" . __LINE__ . ": Cannot unzip Word file ('$filename') to read XML", DEBUG_DEVELOPER);
-        debug_unlink($filename);
+        atto_wordimport_debug_unlink($filename);
         return false;
     }
 
@@ -213,10 +230,10 @@ function convert_to_xhtml($filename, $contextid) {
     $xsltproc = xslt_create();
     if (!($xsltoutput = xslt_process($xsltproc, $tempwordmlfilename, $stylesheet, null, null, $parameters))) {
         debugging(__FUNCTION__ . ":" . __LINE__ . ": Transformation failed", DEBUG_DEVELOPER);
-        debug_unlink($tempwordmlfilename);
+        atto_wordimport_debug_unlink($tempwordmlfilename);
         return false;
     }
-    debug_unlink($tempwordmlfilename);
+    atto_wordimport_debug_unlink($tempwordmlfilename);
     debugging(__FUNCTION__ . ":" . __LINE__ . ": Import XSLT Pass 1 succeeded, XHTML output fragment = " . str_replace("\n", "", substr($xsltoutput, 0, 200)), DEBUG_DEVELOPER);
 
     // Write output of Pass 1 to a temporary file, for use in Pass 2.
@@ -233,10 +250,10 @@ function convert_to_xhtml($filename, $contextid) {
     debugging(__FUNCTION__ . ":" . __LINE__ . ": Import XSLT Pass 2 with stylesheet \"" . $stylesheet . "\"", DEBUG_DEVELOPER);
     if (!($xsltoutput = xslt_process($xsltproc, $tempxhtmlfilename, $stylesheet, null, null, $parameters))) {
         debugging(__FUNCTION__ . ":" . __LINE__ . ": Import Pass 2 Transformation failed", DEBUG_DEVELOPER);
-        debug_unlink($tempxhtmlfilename);
+        atto_wordimport_debug_unlink($tempxhtmlfilename);
         return false;
     }
-    debug_unlink($tempxhtmlfilename);
+    atto_wordimport_debug_unlink($tempxhtmlfilename);
     debugging(__FUNCTION__ . ":" . __LINE__ . ": Import Pass 2 succeeded, XHTML output fragment = " . str_replace("\n", "", substr($xsltoutput, 600, 500)), DEBUG_DEVELOPER);
 
     // Strip out superfluous namespace declarations on paragraph elements, which Moodle 2.7+ on Windows seems to throw in.
@@ -251,23 +268,22 @@ function convert_to_xhtml($filename, $contextid) {
     }
 
     return $xsltoutput;
-}   // end convert_to_xhtml
+}   // End function convert_to_xhtml.
 
 
 /**
  * Get the HTML body from the converted Word file
  *
- * A string containing XHTML is returned
- *
- * @return string
+ * @param $xhtmlstring string containing complete XHTML text including head element metadata
+ * @return string containing XHTML inside '<body> ... </body>' is returned
  */
-function get_html_body($xhtmlstring) {
+function atto_wordimport_get_html_body($xhtmlstring) {
     debugging(__FUNCTION__ . "(xhtmlstring = \"" . substr($xhtmlstring, 0, 100) . "\")", DEBUG_DEVELOPER);
 
     $bodystart = stripos($xhtmlstring, '<body>') + strlen('<body>');
     $bodylength = strripos($xhtmlstring, '</body>') - $bodystart;
-    //debugging(__FUNCTION__ . ":" . __LINE__ . ": bodystart = {$bodystart}, bodylength = {$bodylength}", DEBUG_DEVELOPER);
-    if ($bodystart  !== false || $bodylength !== false) {
+    // debugging(__FUNCTION__ . ":" . __LINE__ . ": bodystart = {$bodystart}, bodylength = {$bodylength}", DEBUG_DEVELOPER);
+    if ($bodystart !== false || $bodylength !== false) {
         $xhtmlbody = substr($xhtmlstring, $bodystart, $bodylength);
     } else {
         debugging(__FUNCTION__ . "() -> Invalid XHTML, using original cdata string", DEBUG_DEVELOPER);
@@ -278,10 +294,14 @@ function get_html_body($xhtmlstring) {
     return $xhtmlbody;
 }
 
-/*
+/**
  * Delete temporary files if debugging disabled
+ *
+ * @param $filename name of file to be deleted
+ * @return void
+
  */
-function debug_unlink($filename) {
+function atto_wordimport_debug_unlink($filename) {
     if (!debugging(null, DEBUG_DEVELOPER)) {
         unlink($filename);
     }

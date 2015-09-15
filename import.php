@@ -23,13 +23,7 @@
  */
 
 require(dirname(basename(__FILE__)) . '/../../../../../config.php');
-require_once($CFG->libdir . '/filestorage/file_storage.php');
-require_once($CFG->dirroot . '/repository/lib.php');
-require_once("$CFG->libdir/xmlize.php");
 require(dirname(basename(__FILE__)) . '/lib.php');
-// Include XSLT processor functions.
-require_once(dirname(basename(__FILE__)) . "/xsl_emulate_xslt.inc");
-
 
 $itemid = required_param('itemid', PARAM_INT);
 $contextid = required_param('ctx_id', PARAM_INT);
@@ -50,18 +44,19 @@ foreach ($filearray as $file) {
 $filearray = $fs->delete_area_files($contextid, 'user', 'draft', $itemid);
 
 // Convert the Word file into XHTML with images.
-$htmltext = convert_to_xhtml($tmpfilename, $contextid);
+$htmltext = atto_wordimport_convert_to_xhtml($tmpfilename, $contextid);
 
 // Handle the images by encoding them as JSON items.
 $imagescontainerstart = stripos($htmltext, '<imagesContainer>') + strlen('<imagesContainer>');
 $imagescontainerend = stripos($htmltext, '</imagesContainer>');
 $imagesstring = "";
 debugging(basename(__FILE__) . " (" . __LINE__ . "): imagescontainerend: {$imagescontainerend}, imagescontainerstart {$imagescontainerstart}", DEBUG_DEVELOPER);
-if ($imagescontainerend - $imagescontainerstart > 2) {
+if ($imagescontainerend and $imagescontainerstart and $imagescontainerend - $imagescontainerstart > 2) {
     // "filename="media/image1.jpg" mime-type="image/jpeg" contextid="5" itemid="693725586" name="image1.jpg" url="http://localhost/m29/draftfile.php/5/user/draft/693725586/image1.jpg"
     $n_matches = preg_match_all('|<file filename="media/([^"]*)" mime-type="image/([^"]*)" contextid="([^"]*)" itemid="([^"]*)" name="([^"]*)" url="([^"]*)"/>|', substr($htmltext, $imagescontainerstart), $imagefiles, PREG_SET_ORDER);
     debugging(basename(__FILE__) . " (" . __LINE__ . "): image file n_matches: \"{$n_matches}\"", DEBUG_DEVELOPER);
     if ($n_matches !== false) {
+        $imagesstring = ",";
         foreach ($imagefiles as $file) {
             $imagestring = "\"url\": " . json_encode($file[6]) . ",";
             $imagestring .= "\"id\":\"{$file[4]}\",\"name\":\"{$file[5]}\"";
@@ -72,7 +67,7 @@ if ($imagescontainerend - $imagescontainerstart > 2) {
 }
 
 // Get the content inside the HTML body tags only, ignore metadata for now.
-$htmltext = get_html_body($htmltext);
+$htmltext = atto_wordimport_get_html_body($htmltext);
 
 // Return the XHTML in JSON-encoded format, if it was encoded OK.
 $htmltextjson = json_encode($htmltext);
@@ -80,11 +75,11 @@ if ($htmltextjson === false) {
     debugging(basename(__FILE__) . " (" . __LINE__ . "): JSON encoding failed ", DEBUG_DEVELOPER);
     echo '{"error": "' . get_string('transformationfailed', 'atto_wordimport') . '"}';
 } else {
-    debugging(basename(__FILE__) . " (" . __LINE__ . "): jsontext = |" . 
+    debugging(basename(__FILE__) . " (" . __LINE__ . "): jsontext = |" .
         str_replace("\n", " ", substr($htmltextjson, 0, 500)) . "...|", DEBUG_DEVELOPER);
-    echo "{\"html\": " . $htmltextjson . "," . $imagesstring . "}";
+    echo "{\"html\": " . $htmltextjson . $imagesstring . "}";
 
 // Delete the temporary file now that we're finished with it.
-debug_unlink($tmpfilename);
+atto_wordimport_debug_unlink($tmpfilename);
 
 }
