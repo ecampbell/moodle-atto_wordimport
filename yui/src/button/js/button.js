@@ -63,6 +63,10 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
      */
 
     initializer: function() {
+        // If we don't have the capability to view then give up.
+        if (this.get('disabled')){
+            return;
+        }
 
         this.addButton({
             icon: 'wordimport',
@@ -172,12 +176,12 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
         e = e._event;
 
         Y.log('File type is ' + e.dataTransfer.files[0].type);
-        // Only handle the event if an image file was dropped in.
+        // Only handle the event if a Word 2010 file was dropped in.
         var handlesDataTransfer = (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length);
         if (handlesDataTransfer && requiredFileType === e.dataTransfer.files[0].type) {
 
             Y.log('File type match succeeded ');
-            var options = host.get('filepickeroptions').image,
+            var options = host.get('filepickeroptions').link,
                 savepath = (options.savepath === undefined) ? '/' : options.savepath,
                 formData = new FormData(),
                 timestamp = 0,

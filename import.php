@@ -22,6 +22,12 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+define('AJAX_SCRIPT', true);
+// Development: turn on all debug messages and strict warnings.
+define('DEBUG_WORDIMPORT', E_ALL | E_STRICT);
+//define('DEBUG_WORDIMPORT', E_NONE);
+
+
 require(dirname(basename(__FILE__)) . '/../../../../../config.php');
 // Include XSLT processor functions.
 require_once(dirname(basename(__FILE__)) . "/xsl_emulate_xslt.inc");
@@ -32,6 +38,9 @@ $contextid = required_param('ctx_id', PARAM_INT);
 
 $context = context::instance_by_id($contextid);
 $PAGE->set_context($context);
+
+// Check that this user is logged in before proceeding.
+require_login();
 
 // Get the reference of the uploaded file, save it as a temporary file, and then delete it from the files table.
 $fs = get_file_storage();

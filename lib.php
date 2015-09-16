@@ -24,10 +24,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-/** Development: turn on all debug messages and strict warnings */
-define('DEBUG_WORDIMPORT', E_ALL | E_STRICT);
-
-
 require_once($CFG->libdir . '/filestorage/file_storage.php');
 require_once($CFG->dirroot . '/repository/lib.php');
 require_once("$CFG->libdir/xmlize.php");

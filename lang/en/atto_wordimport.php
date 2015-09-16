@@ -33,7 +33,6 @@ $string['insert'] = 'Insert';
 $string['nothingtoinsert'] = 'Nothing to insert!';
 $string['pluginname'] = 'Word import (Atto)';
 $string['uploading'] = 'Uploading, please wait...';
-$string['visible'] = 'Visible';
 
 // Strings used in import.php.
 $string['cannotopentempfile'] = 'Cannot open temporary file <b>{$a}</b>';
