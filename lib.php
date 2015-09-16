@@ -60,7 +60,7 @@ function atto_wordimport_strings_for_js() {
  * @return string XHTML content extracted from Word file
  */
 function atto_wordimport_convert_to_xhtml($filename, $contextid) {
-    global $CFG, $OUTPUT;
+    global $CFG, $USER, $OUTPUT;
 
     $word2mqxmlstylesheet1 = 'wordml2xhtml_pass1.xsl';      // Convert WordML into basic XHTML.
     $word2mqxmlstylesheet2 = 'wordml2xhtml_pass2.xsl';      // Refine basic XHTML into Word-compatible XHTML.
@@ -105,6 +105,7 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid) {
         'contextid' => $contextid,
         'component' => 'user',
         'filearea' => 'draft',
+        'userid' => $USER->id,
         'itemid' => 0,
         'filepath' => '/',
         'filename' => ''
