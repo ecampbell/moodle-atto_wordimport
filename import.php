@@ -55,7 +55,7 @@ foreach ($filearray as $file) {
 $filearray = $fs->delete_area_files($contextid, 'user', 'draft', $itemid);
 
 // Convert the Word file into XHTML with images.
-$htmltext = atto_wordimport_convert_to_xhtml($tmpfilename, $contextid);
+$htmltext = atto_wordimport_convert_to_xhtml($tmpfilename, $contextid, $itemid);
 
 // Get the content inside the HTML body tags only, ignore metadata for now.
 $htmltext = atto_wordimport_get_html_body($htmltext);

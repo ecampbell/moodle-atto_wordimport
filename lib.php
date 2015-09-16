@@ -55,11 +55,12 @@ function atto_wordimport_strings_for_js() {
  * Extract the WordProcessingML XML files from the .docx file, and use a sequence of XSLT
  * steps to convert it into XHTML
  *
- * @param $contextid ID of draft file area where images should be stored
  * @param $filename name of file uploaded to file repository as a draft
+ * @param $contextid ID of draft file area where images should be stored
+ * @param $itemid ID of particular group in draft file area where images should be stored
  * @return string XHTML content extracted from Word file
  */
-function atto_wordimport_convert_to_xhtml($filename, $contextid) {
+function atto_wordimport_convert_to_xhtml($filename, $contextid, $itemid) {
     global $CFG, $USER, $OUTPUT;
 
     $word2mqxmlstylesheet1 = 'wordml2xhtml_pass1.xsl';      // Convert WordML into basic XHTML.
@@ -106,7 +107,7 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid) {
         'component' => 'user',
         'filearea' => 'draft',
         'userid' => $USER->id,
-        'itemid' => 0,
+        'itemid' => $itemid,
         'filepath' => '/',
         'filename' => ''
         );
@@ -141,7 +142,6 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid) {
                     if ($imagemimetype != '') {
                         // Prepare the file details for storage
                         $fileinfo['filename'] = $imagename;
-                        $fileinfo['itemid'] = file_get_unused_draft_itemid();
                         $fs->create_file_from_string($fileinfo, $imagedata);
                         debugging(__FUNCTION__ . ":" . __LINE__ . ": stored \"" . $fileinfo['filename'] .
                             '\" with itemid = ' . $fileinfo['itemid'], DEBUG_WORDIMPORT);
