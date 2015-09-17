@@ -57,10 +57,10 @@ function atto_wordimport_strings_for_js() {
  *
  * @param $filename name of file uploaded to file repository as a draft
  * @param $contextid ID of draft file area where images should be stored
- * @param $itemid ID of particular group in draft file area where images should be stored
+ * @param $draftitemid ID of particular group in draft file area where images should be stored
  * @return string XHTML content extracted from Word file
  */
-function atto_wordimport_convert_to_xhtml($filename, $contextid, $itemid) {
+function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
     global $CFG, $USER, $OUTPUT;
 
     $word2mqxmlstylesheet1 = 'wordml2xhtml_pass1.xsl';      // Convert WordML into basic XHTML.
@@ -107,7 +107,7 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $itemid) {
         'component' => 'user',
         'filearea' => 'draft',
         'userid' => $USER->id,
-        'itemid' => $itemid,
+        'itemid' => $draftitemid,
         'filepath' => '/',
         'filename' => ''
         );
@@ -140,18 +140,25 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $itemid) {
 
                     // Store only recognised Internet image formats in the database.
                     if ($imagemimetype != '') {
-                        // Prepare the file details for storage
-                        $fileinfo['filename'] = $imagename;
-                        $fs->create_file_from_string($fileinfo, $imagedata);
-                        debugging(__FUNCTION__ . ":" . __LINE__ . ": stored \"" . $fileinfo['filename'] .
-                            '\" with itemid = ' . $fileinfo['itemid'], DEBUG_WORDIMPORT);
+                        // Prepare the file details for storage, ensuring the image name is unique.
+                        $imagenameunique = $imagename;
+                        $file = $fs->get_file($contextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
+                        while ($file) {
+                            $imagenameunique = basename($imagename, '.' . $imagesuffix) . '_' . substr(uniqid(), 5,4) . '.' . $imagesuffix;
+                            $file = $fs->get_file($contextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
+                        }
 
-                        $imageurl = $CFG->wwwroot . '/draftfile.php/' . $contextid . '/user/draft/' .
-                            $fileinfo['itemid'] . '/' . $fileinfo['filename'];
+                        $fileinfo['filename'] = $imagenameunique;
+                        $fs->create_file_from_string($fileinfo, $imagedata);
+                        debugging(__FUNCTION__ . ":" . __LINE__ . ": stored \"{$imagename}\"" .
+                            " as \"{$imagenameunique}\" with itemid {$draftitemid}", DEBUG_WORDIMPORT);
+
+
+                        $imageurl = "$CFG->wwwroot/draftfile.php/$contextid/user/draft/$draftitemid/$imagenameunique";
                         // Return all the details of where the file is stored, even though we don't need them at the moment.
                         $imagestring .= "<file filename=\"media/{$imagename}\" mime-type=\"{$imagemimetype}\"";
-                        $imagestring .= " contextid=\"{$contextid}\" itemid=\"{$fileinfo['itemid']}\"";
-                        $imagestring .= " name=\"{$fileinfo['filename']}\" url=\"{$imageurl}\">{$imageurl}</file>\n";
+                        $imagestring .= " contextid=\"{$contextid}\" itemid=\"{$draftitemid}\"";
+                        $imagestring .= " name=\"{$imagenameunique}\" url=\"{$imageurl}\">{$imageurl}</file>\n";
                     } else {
                         debugging(__FUNCTION__ . ":" . __LINE__ . ": ignore unsupported media file name $zefilename, imagename " .
                             " = $imagename, imagesuffix = $imagesuffix, imagemimetype = $imagemimetype", DEBUG_WORDIMPORT);
