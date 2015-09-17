@@ -35,6 +35,7 @@ require(dirname(basename(__FILE__)) . '/lib.php');
 
 $itemid = required_param('itemid', PARAM_INT);
 $contextid = required_param('ctx_id', PARAM_INT);
+$filename = required_param('filename', PARAM_TEXT);
 
 $context = context::instance_by_id($contextid);
 $PAGE->set_context($context);
@@ -43,19 +44,19 @@ $PAGE->set_context($context);
 require_login();
 
 // Get the reference of the uploaded file, save it as a temporary file, and then delete it from the files table.
+debugging(basename(__FILE__) . " (" . __LINE__ . "): filename = " . $filename, DEBUG_WORDIMPORT);
 $fs = get_file_storage();
-$filearray = $fs->get_area_files($contextid, 'user', 'draft', $itemid);
-foreach ($filearray as $file) {
-    if ($file->is_directory()) {
-        continue;
-    }
+$file = $fs->get_file($contextid, 'user', 'draft', $itemid, '/', basename($filename));
+if ($file) {
     $tmpfilename = $file->copy_content_to_temp();
-    debugging(basename(__FILE__) . " (" . __LINE__ . "): tmp_filename = " . $tmpfilename, DEBUG_WORDIMPORT);
+    $file->delete();
+    debugging(basename(__FILE__) . " (" . __LINE__ . "): \"{$filename}\" saved to \"{$tmpfilename}\"", DEBUG_WORDIMPORT);
 }
-$filearray = $fs->delete_area_files($contextid, 'user', 'draft', $itemid);
 
-// Convert the Word file into XHTML with images.
+
+// Convert the Word file into XHTML with images, and delete it once we're finished.
 $htmltext = atto_wordimport_convert_to_xhtml($tmpfilename, $contextid, $itemid);
+atto_wordimport_debug_unlink($tmpfilename);
 
 // Get the content inside the HTML body tags only, ignore metadata for now.
 $htmltext = atto_wordimport_get_html_body($htmltext);
@@ -69,8 +70,5 @@ if ($htmltextjson === false) {
     debugging(basename(__FILE__) . " (" . __LINE__ . "): jsontext = |" .
         str_replace("\n", " ", substr($htmltextjson, 0, 500)) . "...|", DEBUG_WORDIMPORT);
     echo "{\"html\": " . $htmltextjson . "}";
-
-// Delete the temporary file now that we're finished with it.
-atto_wordimport_debug_unlink($tmpfilename);
 
 }
