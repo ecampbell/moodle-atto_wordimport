@@ -153,9 +153,10 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
 
         var contextID = 'ctx_id=' + context,
             itemid = 'itemid=' + options.itemid,
+            filename = 'filename=' + params.file,
             phpImportURL = '/lib/editor/atto/plugins/wordimport/import.php?';
-        Y.log('File info: ' + contextID + ';' + itemid);
-        xhr.open("GET", M.cfg.wwwroot + phpImportURL + contextID + '&' + itemid, true);
+        Y.log('File info: ' + contextID + ';' + itemid + ';' + filename);
+        xhr.open("GET", M.cfg.wwwroot + phpImportURL + contextID + '&' + itemid + '&' + filename, true);
         xhr.send();
 
         return true;
