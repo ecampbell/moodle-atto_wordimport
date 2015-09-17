@@ -2,6 +2,7 @@ Release notes
 -------------
 
 Date          Version   Comment
+2015/09/17    0.0.8     Ensure image names are always unique when importing multiple times
 2015/09/16    0.0.7     Clean up code to comply with Moodle guidelines and implement reviewer comments, import images
 2015/09/13    0.0.6     Fix text support
 2015/09/11    0.0.5     Add support for importing images
