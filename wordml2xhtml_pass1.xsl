@@ -4751,8 +4751,8 @@
              EMUs (English Metric Units); 1 inch = 914400, therefore 1 pixel = 914400 / 96 (dpi) = 9525 
              cf. http://polymathprogrammer.com/2009/10/22/english-metric-units-and-open-xml/ -->
         <!-- Map wp:extent/@cx field to width attribute -->
-        <xsl:variable name="img_width" select="wp:inline/wp:extent/@cx div 9525"/>
-        <xsl:variable name="img_height" select="wp:inline/wp:extent/@cy div 9525"/>
+        <xsl:variable name="img_width" select="substring-before(wp:inline/wp:extent/@cx div 9525, '.')"/>
+        <xsl:variable name="img_height" select="substring-before(wp:inline/wp:extent/@cy div 9525, '.')"/>
 
         <!-- Map description field to longdesc attribute -->
         <xsl:variable name="img_longdesc" select="wp:inline/wp:docPr/@descr"/>
