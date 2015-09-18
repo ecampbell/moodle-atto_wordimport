@@ -89,6 +89,7 @@
 
     <xsl:output method="xml" encoding="utf-8" indent="no" omit-xml-declaration="yes"/>
 
+    <xsl:include href="omml2mml.xsl"/>
     <xsl:variable name="paraStyleID_Default">Normal</xsl:variable>
 
     <xsl:variable name="charStyleSuffix">-H</xsl:variable>
@@ -4818,12 +4819,15 @@
         </xsl:choose>
     </xsl:template>
 
-    <!-- Footnote references -->
+    <!-- Footnote references: ignore them for the moment -->
+    <xsl:template match="w:r[w:rPr/w:rStyle/@w:val = 'FootnoteReference' and w:footnoteReference]"/>
+    <!--
     <xsl:template match="w:footnoteReference">
         <sup>
             <a class="fnref" href="{concat('#', $footnoteRefLink, @w:id)}" name="{concat($footnoteLink, @w:id)}"/>
         </sup>
     </xsl:template>
+    -->
 
     <xsl:template match="/">
         <xsl:apply-templates select="//wordmlContainer/w:document"/>
@@ -4868,6 +4872,9 @@
         -->
         <xsl:apply-templates/>
     </xsl:template>
+
+    <xsl:template match="w:bookmarkStart[@w:name = '_GoBack']"/>
+    <xsl:template match="w:bookmarkEnd[@w:id = '0']"/>
 
 <!-- Include debugging information in the output -->
 <xsl:template name="debugComment">
