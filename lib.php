@@ -144,7 +144,7 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
                         $imagenameunique = $imagename;
                         $file = $fs->get_file($contextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
                         while ($file) {
-                            $imagenameunique = basename($imagename, '.' . $imagesuffix) . '_' . substr(uniqid(), 5,4) . '.' . $imagesuffix;
+                            $imagenameunique = basename($imagename, '.' . $imagesuffix) . '_' . substr(uniqid(), 8, 4) . '.' . $imagesuffix;
                             $file = $fs->get_file($contextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
                         }
 
