@@ -25,50 +25,62 @@
 define('AJAX_SCRIPT', true);
 // Development: turn on all debug messages and strict warnings.
 define('DEBUG_WORDIMPORT', E_ALL | E_STRICT);
-//define('DEBUG_WORDIMPORT', E_NONE);
+define('DEBUG_WORDIMPORT', 0);
 
 
-require(dirname(basename(__FILE__)) . '/../../../../../config.php');
+require(__DIR__ . '/../../../../../config.php');
 // Include XSLT processor functions.
-require_once(dirname(basename(__FILE__)) . "/xsl_emulate_xslt.inc");
-require(dirname(basename(__FILE__)) . '/lib.php');
+require_once(__DIR__ . "/xsl_emulate_xslt.inc");
+require(__DIR__ . '/lib.php');
 
 $itemid = required_param('itemid', PARAM_INT);
 $contextid = required_param('ctx_id', PARAM_INT);
 $filename = required_param('filename', PARAM_TEXT);
+$sesskey = required_param('sesskey', PARAM_TEXT);
+
+
+list($context, $course, $cm) = get_context_info_array($contextid);
 
 $context = context::instance_by_id($contextid);
-$PAGE->set_context($context);
 
 // Check that this user is logged in before proceeding.
-require_login();
+require_login($course, false, $cm);
+require_sesskey();
 
-// Get the reference of the uploaded file, save it as a temporary file, and then delete it from the files table.
-debugging(basename(__FILE__) . " (" . __LINE__ . "): filename = " . $filename, DEBUG_WORDIMPORT);
+$PAGE->set_context($context);
+
+// Get the reference only of this users' uploaded file, to avoid rogue users' accessing other peoples files.
 $fs = get_file_storage();
-$file = $fs->get_file($contextid, 'user', 'draft', $itemid, '/', basename($filename));
+$usercontext = context_user::instance($USER->id);
+$file = $fs->get_file($usercontext->id, 'user', 'draft', $itemid, '/', basename($filename));
+
 if ($file) {
+    // We have to save the uploaded as a real temporary file so we can process it using zip_open(), etc.
     $tmpfilename = $file->copy_content_to_temp();
-    $file->delete();
     debugging(basename(__FILE__) . " (" . __LINE__ . "): \"{$filename}\" saved to \"{$tmpfilename}\"", DEBUG_WORDIMPORT);
-}
+    // But we delete it from the draft file area to avoid a name-clash message if it is re-uploaded in the same edit.
+    $file->delete();
 
+    // Convert the Word file into XHTML with images, and delete it once we're finished.
+    $htmltext = atto_wordimport_convert_to_xhtml($tmpfilename, $contextid, $itemid);
+    atto_wordimport_debug_unlink($tmpfilename);
 
-// Convert the Word file into XHTML with images, and delete it once we're finished.
-$htmltext = atto_wordimport_convert_to_xhtml($tmpfilename, $contextid, $itemid);
-atto_wordimport_debug_unlink($tmpfilename);
-
-// Get the content inside the HTML body tags only, ignore metadata for now.
-$htmltext = atto_wordimport_get_html_body($htmltext);
-
-// Return the XHTML in JSON-encoded format, if it was encoded OK.
-$htmltextjson = json_encode($htmltext);
-if ($htmltextjson === false) {
-    debugging(basename(__FILE__) . " (" . __LINE__ . "): JSON encoding failed ", DEBUG_WORDIMPORT);
-    echo '{"error": "' . get_string('transformationfailed', 'atto_wordimport') . '"}';
+    if ($htmltext !== false) {
+         debugging(basename(__FILE__) . " (" . __LINE__ . "): htmltext = |" .
+                str_replace("\n", " ", substr($htmltext, 0, 500)) . "...|", DEBUG_WORDIMPORT);
+        // Convert the string to JSON-encoded format.
+        $htmltextjson = json_encode($htmltext);
+        if ($htmltextjson) {
+            echo '{"html": ' . $htmltextjson . '}';
+        } else {
+            debugging(basename(__FILE__) . " (" . __LINE__ . "): JSON encoding failed ", DEBUG_WORDIMPORT);
+            echo '{"error": "' . get_string('cannotuploadfile') . "}";
+        }
+    } else {
+        debugging(basename(__FILE__) . " (" . __LINE__ . "): File conversion failed ", DEBUG_WORDIMPORT);
+        echo '{"error": "' . get_string('cannotuploadfile') . '"}';
+    }
 } else {
-    debugging(basename(__FILE__) . " (" . __LINE__ . "): jsontext = |" .
-        str_replace("\n", " ", substr($htmltextjson, 0, 500)) . "...|", DEBUG_WORDIMPORT);
-    echo "{\"html\": " . $htmltextjson . "}";
-
+    debugging(basename(__FILE__) . " (" . __LINE__ . "): File access failed", DEBUG_WORDIMPORT);
+    echo '{"error": "' . get_string('filenotreadable') . '"}';
 }

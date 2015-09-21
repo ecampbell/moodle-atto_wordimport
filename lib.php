@@ -41,6 +41,7 @@ function atto_wordimport_strings_for_js() {
         'importfile',
         'insert',
         'converting',
+        'transformationfailed',
         'uploading',
         'xmlnotsupported',
         'pluginname'
@@ -61,7 +62,7 @@ function atto_wordimport_strings_for_js() {
  * @return string XHTML content extracted from Word file
  */
 function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
-    global $CFG, $USER, $OUTPUT;
+    global $CFG, $USER;
 
     $word2mqxmlstylesheet1 = 'wordml2xhtml_pass1.xsl';      // Convert WordML into basic XHTML.
     $word2mqxmlstylesheet2 = 'wordml2xhtml_pass2.xsl';      // Refine basic XHTML into Word-compatible XHTML.
@@ -71,17 +72,15 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
     raise_memory_limit(MEMORY_HUGE);
 
     // XSLT stylesheet to convert WordML into initial XHTML format.
-    $stylesheet = dirname(basename(__FILE__)) . "/" . $word2mqxmlstylesheet1;
+    $stylesheet = __DIR__ . "/" . $word2mqxmlstylesheet1;
 
     // Check that XSLT is installed, and the XSLT stylesheet is present.
     if (!class_exists('XSLTProcessor') || !function_exists('xslt_create')) {
         debugging(__FUNCTION__ . " (" . __LINE__ . "): XSLT not installed", DEBUG_WORDIMPORT);
-        // echo $OUTPUT->notification(get_string('xsltunavailable', 'atto_wordimport'));
         return false;
     } else if (!file_exists($stylesheet)) {
         // XSLT stylesheet to transform WordML into XHTML doesn't exist.
         debugging(__FUNCTION__ . " (" . __LINE__ . "): XSLT stylesheet missing: $stylesheet", DEBUG_WORDIMPORT);
-        // echo $OUTPUT->notification(get_string('stylesheetunavailable', 'atto_wordimport', $stylesheet));
         return false;
     }
 
@@ -130,16 +129,7 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
                     $imagename = basename($zefilename);
                     $imagesuffix = strtolower(substr(strrchr($zefilename, "."), 1));
                     // gif, png, jpg and jpeg handled OK, but bmp and other non-Internet formats are not.
-                    $imagemimetype = "image/";
-                    if ($imagesuffix == 'gif' or $imagesuffix == 'png') {
-                        $imagemimetype .= $imagesuffix;
-                    }
-                    if ($imagesuffix == 'jpg' or $imagesuffix == 'jpeg') {
-                        $imagemimetype .= "jpeg";
-                    }
-
-                    // Store only recognised Internet image formats in the database.
-                    if ($imagemimetype != '') {
+                    if ($imagesuffix == 'gif' or $imagesuffix == 'png' or $imagesuffix == 'jpg' or $imagesuffix == 'jpeg') {
                         // Prepare the file details for storage, ensuring the image name is unique.
                         $imagenameunique = $imagename;
                         $file = $fs->get_file($contextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
@@ -156,12 +146,12 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
 
                         $imageurl = "$CFG->wwwroot/draftfile.php/$contextid/user/draft/$draftitemid/$imagenameunique";
                         // Return all the details of where the file is stored, even though we don't need them at the moment.
-                        $imagestring .= "<file filename=\"media/{$imagename}\" mime-type=\"{$imagemimetype}\"";
+                        $imagestring .= "<file filename=\"media/{$imagename}\"";
                         $imagestring .= " contextid=\"{$contextid}\" itemid=\"{$draftitemid}\"";
                         $imagestring .= " name=\"{$imagenameunique}\" url=\"{$imageurl}\">{$imageurl}</file>\n";
                     } else {
                         debugging(__FUNCTION__ . ":" . __LINE__ . ": ignore unsupported media file name $zefilename, imagename " .
-                            " = $imagename, imagesuffix = $imagesuffix, imagemimetype = $imagemimetype", DEBUG_WORDIMPORT);
+                            " = $imagename, imagesuffix = $imagesuffix", DEBUG_WORDIMPORT);
                     }
                 } else {
                     // Look for required XML files, read and wrap it, remove the XML declaration, and add it to the XML string.
@@ -251,7 +241,7 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
     debugging(__FUNCTION__ . ":" . __LINE__ . ": Import Pass 1 output XHTML data saved to $tempxhtmlfilename", DEBUG_WORDIMPORT);
 
     // Pass 2 - tidy up linear XHTML a bit.
-    $stylesheet = dirname(basename(__FILE__)) . "/" . $word2mqxmlstylesheet2;
+    $stylesheet = __DIR__ . "/" . $word2mqxmlstylesheet2;
     debugging(__FUNCTION__ . ":" . __LINE__ . ": Import XSLT Pass 2 with stylesheet \"" . $stylesheet . "\"", DEBUG_WORDIMPORT);
     if (!($xsltoutput = xslt_process($xsltproc, $tempxhtmlfilename, $stylesheet, null, null, $parameters))) {
         debugging(__FUNCTION__ . ":" . __LINE__ . ": Import Pass 2 Transformation failed", DEBUG_WORDIMPORT);
@@ -307,7 +297,7 @@ function atto_wordimport_get_html_body($xhtmlstring) {
 
  */
 function atto_wordimport_debug_unlink($filename) {
-    if (!debugging(null, DEBUG_WORDIMPORT)) {
+    if (DEBUG_WORDIMPORT == 0) {
         unlink($filename);
     }
 }
