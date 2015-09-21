@@ -25,7 +25,7 @@
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     exclude-result-prefixes="a cp dc dcterms dcmitype xsi o r v ve w wne wp wx w10 xs rels vt customProps"
     version="1.0">
-    
+
     <!-- This stylesheet is adapted from code by Oleg Tkachenko. The original copyright notice
          is reproduced below -->
     <!--
@@ -89,7 +89,7 @@
 
     <xsl:output method="xml" encoding="utf-8" indent="no" omit-xml-declaration="yes"/>
 
-    <xsl:include href="omml2mml.xsl"/>
+
     <xsl:variable name="paraStyleID_Default">Normal</xsl:variable>
 
     <xsl:variable name="charStyleSuffix">-H</xsl:variable>
@@ -2593,7 +2593,8 @@
                             </xsl:otherwise>
                         </xsl:choose>
                     </xsl:variable>
-                    <a class="xref" href="{$href}"></a>
+                    <!-- Ignore cross-references -->
+                    <!--<a class="xref" href="{$href}"></a> -->
                 </xsl:when>
                 <xsl:when test="contains($refcontent, 'XE')">
                     <a class="index_term" href="{normalize-space(substring-after($refcontent, 'XE '))}"></a>
