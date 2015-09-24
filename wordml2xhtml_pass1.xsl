@@ -21,11 +21,12 @@
     xmlns:dc="http://purl.org/dc/elements/1.1/"
     xmlns:dcterms="http://purl.org/dc/terms/"
     xmlns:dcmitype="http://purl.org/dc/dcmitype/"
+    xmlns:mml="http://www.w3.org/1998/Math/MathML"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     exclude-result-prefixes="a cp dc dcterms dcmitype xsi o r v ve w wne wp wx w10 xs rels vt customProps"
     version="1.0">
-
+    
     <!-- This stylesheet is adapted from code by Oleg Tkachenko. The original copyright notice
          is reproduced below -->
     <!--
@@ -85,10 +86,12 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later (5)
 -->
 
+    <xsl:include href="omml2mml.xsl"/>
+
     <xsl:param name="debug_flag" select="'0'"/>
+    <xsl:param name="pluginname"/>
 
     <xsl:output method="xml" encoding="utf-8" indent="no" omit-xml-declaration="yes"/>
-
 
     <xsl:variable name="paraStyleID_Default">Normal</xsl:variable>
 
@@ -3676,9 +3679,11 @@
             <xsl:value-of select="$debug_newline"/>
             <xsl:element name="{$table_celltype}">
 
+        <xsl:if test="$sTblStyleName/@w:styleId != ''">
             <xsl:attribute name="class">
                 <xsl:value-of select="$sTblStyleName/@w:styleId"/>
             </xsl:attribute>
+        </xsl:if>
 
             <xsl:for-each select="w:tcPr[1]/w:gridSpan[1]/@w:val">
                 <xsl:attribute name="colspan">
@@ -3836,9 +3841,11 @@
         <xsl:value-of select="$debug_newline"/>
         <tr>
 
-        <xsl:attribute name="class">
-            <xsl:value-of select="$sTblStyleName/@w:styleId"/>
-        </xsl:attribute>
+        <xsl:if test="$sTblStyleName/@w:styleId != ''">
+            <xsl:attribute name="class">
+                <xsl:value-of select="$sTblStyleName/@w:styleId"/>
+            </xsl:attribute>
+        </xsl:if>
 
         <xsl:variable name="cnfRow" select="string(w:trPr[1]/w:cnfStyle[1]/@w:val)"/>
 
@@ -4628,17 +4635,7 @@
                     <imageLinks>
                         <xsl:for-each select="$imageLinks">
                             <xsl:value-of select="$debug_newline"/>
-                            <Relationship Id="{@Id}" Target="{@Target}" TargetMode="{@TargetMode}">
-                                <xsl:variable name="ref_target" select="@Target"/>
-                                <xsl:choose>
-                                <xsl:when test="count($imagesContainer/file[@filename = $ref_target]) != 0">
-                                    <xsl:value-of select="concat('Matching file &quot;', $imagesContainer/file[@filename = $ref_target]/@filename, '&quot; found')"/>
-                                </xsl:when>
-                                <xsl:otherwise>
-                                    <xsl:value-of select="'No matching file found'"/>
-                                </xsl:otherwise>
-                                </xsl:choose>
-                            </Relationship>
+                            <Relationship Id="{@Id}" Target="{@Target}" TargetMode="{@TargetMode}"/>
                         </xsl:for-each>
                         <xsl:value-of select="$debug_newline"/>
                     </imageLinks>
@@ -4713,7 +4710,10 @@
                     </xsl:if>
                 </div>
             </body>
-            <xsl:apply-templates select="//imagesContainer"/>
+            <!-- Keep original images data if importing directly into database -->
+            <xsl:if test="$pluginname = 'atto_wordimport'">
+                <xsl:apply-templates select="//imagesContainer"/>
+            </xsl:if>
         </html>
     </xsl:template>
     
@@ -4752,7 +4752,7 @@
         <!-- The wp:extent/@cx and @cy attributes define the size of the image. They are denominated in 
              EMUs (English Metric Units); 1 inch = 914400, therefore 1 pixel = 914400 / 96 (dpi) = 9525 
              cf. http://polymathprogrammer.com/2009/10/22/english-metric-units-and-open-xml/ -->
-        <!-- Map wp:extent/@cx field to width attribute -->
+        <!-- Map wp:extent/@cx and @cy fields to width/height, and round to integers -->
         <xsl:variable name="img_width" select="substring-before(wp:inline/wp:extent/@cx div 9525, '.')"/>
         <xsl:variable name="img_height" select="substring-before(wp:inline/wp:extent/@cy div 9525, '.')"/>
 
@@ -4766,9 +4766,13 @@
         <!-- Store the image data or URL in the src attribute -->
         <xsl:variable name="img_src">
             <xsl:choose>
-            <xsl:when test="$img_rid != ''">
+            <xsl:when test="$img_rid != '' and $pluginname = 'atto_wordimport'">
                 <!-- Dereference the reference ID field to get the file name, and map to the src attribute -->
                 <xsl:value-of select="$imagesContainer/file[@filename = $img_filename]"/>
+            </xsl:when>
+            <xsl:when test="$img_rid != ''">
+                <!-- Dereference the reference ID field to get the file name, and map to the src attribute -->
+                <xsl:value-of select="concat('data:', $imagesContainer/file[@filename = $img_filename]/@mime-type, ';base64,', $imagesContainer/file[@filename = $img_filename])"/>
             </xsl:when>
             <xsl:when test="$img_external_rid != ''">
                 <!-- External image, so just keep the URL -->
@@ -4820,6 +4824,26 @@
         </xsl:choose>
     </xsl:template>
 
+    <!-- Handle equations by converting them to MathML -->
+    <xsl:template match="m:oMathPara">
+        <xsl:apply-templates/>
+    </xsl:template>
+
+    <xsl:template match="m:oMath">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <xsl:apply-templates />
+        </math>
+    </xsl:template>
+
+    <!-- Handle w:dir, which Word sometimes wraps around w:r elements in RTL texts like Arabic -->
+    <xsl:template match="w:dir">
+        <xsl:apply-templates/>
+    </xsl:template>
+
+    <!-- Delete the bookmark marking the last cursor position-->
+    <xsl:template match="w:bookmarkStart[@w:name = '_GoBack']"/>
+    <xsl:template match="w:bookmarkEnd[@w:id = '0']"/>
+
     <!-- Footnote references: ignore them for the moment -->
     <xsl:template match="w:r[w:rPr/w:rStyle/@w:val = 'FootnoteReference' and w:footnoteReference]"/>
     <!--
@@ -4854,7 +4878,7 @@
     </xsl:template>
 
 
-    <xsl:template match="customProps">
+    <xsl:template match="imagesContainer|customProps|styleMap|imageLinks">
     <!--
         <xsl:comment>
             <xsl:value-of select="concat(name(), ' Container deleted')"/>
@@ -4873,9 +4897,6 @@
         -->
         <xsl:apply-templates/>
     </xsl:template>
-
-    <xsl:template match="w:bookmarkStart[@w:name = '_GoBack']"/>
-    <xsl:template match="w:bookmarkEnd[@w:id = '0']"/>
 
 <!-- Include debugging information in the output -->
 <xsl:template name="debugComment">

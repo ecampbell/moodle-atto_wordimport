@@ -56,31 +56,29 @@ function atto_wordimport_strings_for_js() {
  * Extract the WordProcessingML XML files from the .docx file, and use a sequence of XSLT
  * steps to convert it into XHTML
  *
- * @param $filename name of file uploaded to file repository as a draft
- * @param $contextid ID of draft file area where images should be stored
- * @param $draftitemid ID of particular group in draft file area where images should be stored
- * @return string XHTML content extracted from Word file
+ * @param string $filename name of file uploaded to file repository as a draft
+ * @param int $contextid ID of draft file area where images should be stored
+ * @param int $draftitemid ID of particular group in draft file area where images should be stored
+ * @return mixed Boolean false or XHTML content extracted from Word file
  */
 function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
     global $CFG, $USER;
 
-    $word2mqxmlstylesheet1 = 'wordml2xhtml_pass1.xsl';      // Convert WordML into basic XHTML.
-    $word2mqxmlstylesheet2 = 'wordml2xhtml_pass2.xsl';      // Refine basic XHTML into Word-compatible XHTML.
+    $word2mqxmlstylesheet1 = __DIR__ . "/wordml2xhtml_pass1.xsl"; // Convert WordML into basic XHTML.
+    $word2mqxmlstylesheet2 = __DIR__ . "/wordml2xhtml_pass2.xsl"; // Refine basic XHTML into Word-compatible XHTML.
 
     debugging(__FUNCTION__ . ":" . __LINE__ . ": Word file = $filename", DEBUG_WORDIMPORT);
     // Give XSLT as much memory as possible, to enable larger Word files to be imported.
     raise_memory_limit(MEMORY_HUGE);
 
-    // XSLT stylesheet to convert WordML into initial XHTML format.
-    $stylesheet = __DIR__ . "/" . $word2mqxmlstylesheet1;
 
     // Check that XSLT is installed, and the XSLT stylesheet is present.
     if (!class_exists('XSLTProcessor') || !function_exists('xslt_create')) {
         debugging(__FUNCTION__ . " (" . __LINE__ . "): XSLT not installed", DEBUG_WORDIMPORT);
         return false;
-    } else if (!file_exists($stylesheet)) {
+    } else if (!file_exists($word2mqxmlstylesheet1)) {
         // XSLT stylesheet to transform WordML into XHTML doesn't exist.
-        debugging(__FUNCTION__ . " (" . __LINE__ . "): XSLT stylesheet missing: $stylesheet", DEBUG_WORDIMPORT);
+        debugging(__FUNCTION__ . " (" . __LINE__ . "): XSLT stylesheet missing: $word2mqxmlstylesheet1", DEBUG_WORDIMPORT);
         return false;
     }
 
@@ -90,7 +88,8 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
         'moodle_textdirection' => (right_to_left()) ? 'rtl' : 'ltr',
         'moodle_release' => $CFG->release,
         'moodle_url' => $CFG->wwwroot . "/",
-        'debug_flag' => debugging('', DEBUG_WORDIMPORT)
+        'pluginname' => 'atto_wordimport',
+        'debug_flag' => DEBUG_WORDIMPORT
     );
 
     // Pre-XSLT preparation: merge the WordML and image content from the .docx Word file into one large XML file.
@@ -120,7 +119,6 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
             if (zip_entry_open($zfh, $zipentry, "r")) {
                 $zefilename = zip_entry_name($zipentry);
                 $zefilesize = zip_entry_filesize($zipentry);
-                // debugging(__FUNCTION__ . ":" . __LINE__ . ": zip_entry_name = $zefilename, size = $zefilesize", DEBUG_WORDIMPORT);
 
                 // Insert internal images into the files table.
                 if (strpos($zefilename, "media")) {
@@ -134,7 +132,8 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
                         $imagenameunique = $imagename;
                         $file = $fs->get_file($contextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
                         while ($file) {
-                            $imagenameunique = basename($imagename, '.' . $imagesuffix) . '_' . substr(uniqid(), 8, 4) . '.' . $imagesuffix;
+                            $imagenameunique = basename($imagename, '.' . $imagesuffix) . '_' . substr(uniqid(), 8, 4) .
+                                '.' . $imagesuffix;
                             $file = $fs->get_file($contextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
                         }
 
@@ -150,7 +149,7 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
                         $imagestring .= " contextid=\"{$contextid}\" itemid=\"{$draftitemid}\"";
                         $imagestring .= " name=\"{$imagenameunique}\" url=\"{$imageurl}\">{$imageurl}</file>\n";
                     } else {
-                        debugging(__FUNCTION__ . ":" . __LINE__ . ": ignore unsupported media file name $zefilename, imagename " .
+                        debugging(__FUNCTION__ . ":" . __LINE__ . ": ignore unsupported media file $zefilename" .
                             " = $imagename, imagesuffix = $imagesuffix", DEBUG_WORDIMPORT);
                     }
                 } else {
@@ -184,10 +183,12 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
                             $wordmldata .= "<footnoteLinks>" . str_replace($xmldeclaration,
                                 zip_entry_read($zipentry, $zefilesize), "") . "</footnoteLinks>\n";
                             break;
+                        /*
                         case "word/_rels/settings.xml.rels":
                             $wordmldata .= "<settingsLinks>" . str_replace($xmldeclaration, "",
                                 zip_entry_read($zipentry, $zefilesize)) . "</settingsLinks>\n";
                             break;
+                        */
                         default:
                             // debugging(__FUNCTION__ . ":" . __LINE__ . ": Ignore $zefilename", DEBUG_WORDIMPORT);
                     }
@@ -212,6 +213,9 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
     // Pass 1 - convert WordML into linear XHTML.
     // Create a temporary file to store the merged WordML XML content to transform.
     $tempwordmlfilename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".wml";
+    // Strip out superfluous namespace declarations on paragraph elements, which Moodle 2.7+ on Windows seems to throw in.
+    $xsltoutput = str_replace('<p xmlns="http://www.w3.org/1999/xhtml"', '<p', $xsltoutput);
+    $xsltoutput = str_replace(' xmlns=""', '', $xsltoutput);
 
     // Write the WordML contents to be imported.
     if (($nbytes = file_put_contents($tempwordmlfilename, $wordmldata)) == 0) {
@@ -221,15 +225,15 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
     }
     debugging(__FUNCTION__ . ":" . __LINE__ . ": XML data saved to $tempwordmlfilename", DEBUG_WORDIMPORT);
 
-    debugging(__FUNCTION__ . ":" . __LINE__ . ": Import XSLT Pass 1 with stylesheet \"" . $stylesheet . "\"", DEBUG_WORDIMPORT);
     $xsltproc = xslt_create();
-    if (!($xsltoutput = xslt_process($xsltproc, $tempwordmlfilename, $stylesheet, null, null, $parameters))) {
+    if (!($xsltoutput = xslt_process($xsltproc, $tempwordmlfilename, $word2mqxmlstylesheet1, null, null, $parameters))) {
         debugging(__FUNCTION__ . ":" . __LINE__ . ": Transformation failed", DEBUG_WORDIMPORT);
         atto_wordimport_debug_unlink($tempwordmlfilename);
         return false;
     }
     atto_wordimport_debug_unlink($tempwordmlfilename);
-    debugging(__FUNCTION__ . ":" . __LINE__ . ": Import XSLT Pass 1 succeeded, XHTML output fragment = " . str_replace("\n", "", substr($xsltoutput, 0, 200)), DEBUG_WORDIMPORT);
+    debugging(__FUNCTION__ . ":" . __LINE__ . ": Import XSLT Pass 1 succeeded, XHTML output fragment = " .
+        str_replace("\n", "", substr($xsltoutput, 0, 200)), DEBUG_WORDIMPORT);
 
     // Write output of Pass 1 to a temporary file, for use in Pass 2.
     $tempxhtmlfilename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".if1";
@@ -241,19 +245,23 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
     debugging(__FUNCTION__ . ":" . __LINE__ . ": Import Pass 1 output XHTML data saved to $tempxhtmlfilename", DEBUG_WORDIMPORT);
 
     // Pass 2 - tidy up linear XHTML a bit.
-    $stylesheet = __DIR__ . "/" . $word2mqxmlstylesheet2;
-    debugging(__FUNCTION__ . ":" . __LINE__ . ": Import XSLT Pass 2 with stylesheet \"" . $stylesheet . "\"", DEBUG_WORDIMPORT);
-    if (!($xsltoutput = xslt_process($xsltproc, $tempxhtmlfilename, $stylesheet, null, null, $parameters))) {
+    debugging(__FUNCTION__ . ":" . __LINE__ . ": XSLT Pass 2 using \"" . $word2mqxmlstylesheet2 . "\"", DEBUG_WORDIMPORT);
+    if (!($xsltoutput = xslt_process($xsltproc, $tempxhtmlfilename, $word2mqxmlstylesheet2, null, null, $parameters))) {
         debugging(__FUNCTION__ . ":" . __LINE__ . ": Import Pass 2 Transformation failed", DEBUG_WORDIMPORT);
         atto_wordimport_debug_unlink($tempxhtmlfilename);
         return false;
     }
     atto_wordimport_debug_unlink($tempxhtmlfilename);
-    debugging(__FUNCTION__ . ":" . __LINE__ . ": Import Pass 2 succeeded, XHTML output fragment = " . str_replace("\n", "", substr($xsltoutput, 600, 500)), DEBUG_WORDIMPORT);
+    debugging(__FUNCTION__ . ":" . __LINE__ . ": Import Pass 2 succeeded, XHTML output fragment = " . 
+        str_replace("\n", "", substr($xsltoutput, 600, 500)), DEBUG_WORDIMPORT);
 
-    // Strip out superfluous namespace declarations on paragraph elements, which Moodle 2.7+ on Windows seems to throw in.
-    $xsltoutput = str_replace('<p xmlns="http://www.w3.org/1999/xhtml"', '<p', $xsltoutput);
-    $xsltoutput = str_replace(' xmlns=""', '', $xsltoutput);
+    // Strip out most MathML element and attributes for compatibility with MathJax
+    $xsltoutput = str_replace('<mml:', '<', $xsltoutput);
+    $xsltoutput = str_replace('</mml:', '</', $xsltoutput);
+    $xsltoutput = str_replace(' mathvariant="normal"', '', $xsltoutput);
+    $xsltoutput = str_replace(' xmlns:mml="http://www.w3.org/1998/Math/MathML"', '', $xsltoutput);
+    $xsltoutput = str_replace('<math>', '<math xmlns="http://www.w3.org/1998/Math/MathML">', $xsltoutput);
+
     // Keep the converted XHTML file for debugging if developer debugging enabled.
     if (debugging(null, DEBUG_WORDIMPORT)) {
         $tempxhtmlfilename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".xhtml";
@@ -269,8 +277,8 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
 /**
  * Get the HTML body from the converted Word file
  *
- * @param $xhtmlstring string containing complete XHTML text including head element metadata
- * @return string containing XHTML inside '<body> ... </body>' is returned
+ * @param string $xhtmlstring complete XHTML text including head element metadata
+ * @return string XHTML text inside <body> element
  */
 function atto_wordimport_get_html_body($xhtmlstring) {
     debugging(__FUNCTION__ . "(xhtmlstring = \"" . substr($xhtmlstring, 0, 100) . "\")", DEBUG_WORDIMPORT);
@@ -292,7 +300,7 @@ function atto_wordimport_get_html_body($xhtmlstring) {
 /**
  * Delete temporary files if debugging disabled
  *
- * @param $filename name of file to be deleted
+ * @param string $filename name of file to be deleted
  * @return void
 
  */

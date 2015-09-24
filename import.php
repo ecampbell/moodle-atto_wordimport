@@ -25,8 +25,7 @@
 define('AJAX_SCRIPT', true);
 // Development: turn on all debug messages and strict warnings.
 define('DEBUG_WORDIMPORT', E_ALL | E_STRICT);
-define('DEBUG_WORDIMPORT', 0);
-
+//define('DEBUG_WORDIMPORT', 0);
 
 require(__DIR__ . '/../../../../../config.php');
 // Include XSLT processor functions.
@@ -68,8 +67,10 @@ if ($file) {
     if ($htmltext !== false) {
          debugging(basename(__FILE__) . " (" . __LINE__ . "): htmltext = |" .
                 str_replace("\n", " ", substr($htmltext, 0, 500)) . "...|", DEBUG_WORDIMPORT);
+         // Get the body content only, ignoring any metadata in the head.
+         $bodytext = atto_wordimport_get_html_body($htmltext);
         // Convert the string to JSON-encoded format.
-        $htmltextjson = json_encode($htmltext);
+        $htmltextjson = json_encode($bodytext);
         if ($htmltextjson) {
             echo '{"html": ' . $htmltextjson . '}';
         } else {
