@@ -50,15 +50,6 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
     _currentSelection: null,
 
     /**
-     * A reference to the currently open form.
-     *
-     * @param _form
-     * @type Node
-     * @private
-     */
-    _form: null,
-
-    /**
      * Add event listeners.
      *
      * @method initializer
@@ -132,12 +123,13 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                         }
 
                         // Replace placeholder with content from file
-                        newcontent = Y.Node.create(result.html);
-                        if (placeholder) {
-                            placeholder.replace(newcontent);
-                        } else {
-                            self.editor.appendChild(newcontent);
-                        }
+                        //newcontent = Y.Node.create(result.html);
+                        host.insertContentAtFocusPoint(result.html);
+                        //if (placeholder) {
+                        //    placeholder.replace(newcontent);
+                        //} else {
+                        //    self.editor.appendChild(newcontent);
+                        //}
                         self.markUpdated();
                     }
                 } else {

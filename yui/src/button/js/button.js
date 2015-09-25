@@ -48,15 +48,6 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
     _currentSelection: null,
 
     /**
-     * A reference to the currently open form.
-     *
-     * @param _form
-     * @type Node
-     * @private
-     */
-    _form: null,
-
-    /**
      * Add event listeners.
      *
      * @method initializer
@@ -98,7 +89,7 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
             Y.log('URL is null');
             return false;
         }
-        Y.log('URL is ' + params.url);
+        //Y.log('URL is ' + params.url);
         //Y.log('M.cfg.wwwroot = ' + M.cfg.wwwroot);
         // Grab the context ID from the URL, as it doesn't seem to be correct in options
         context = params.url.replace(/.*\/draftfile.php\/([0-9]*)\/.*/i, "$1");
@@ -114,8 +105,7 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
         var self = this,
             xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
-            var placeholder = self.editor.one('#myhtml'),
-                result,
+            var result,
                 newcontent;
 
             if (xhr.readyState === 4) {
@@ -123,28 +113,17 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                     result = JSON.parse(xhr.responseText);
                     if (result) {
                         if (result.error) {
-                            if (placeholder) {
-                                placeholder.remove(true);
-                            }
                             return new M.core.ajaxException(result);
                         }
 
-                        // Replace placeholder with content from file
-                        newcontent = Y.Node.create(result.html);
-                        if (placeholder) {
-                            placeholder.replace(newcontent);
-                        } else {
-                            self.editor.appendChild(newcontent);
-                        }
+                        // Insert content from file at current focus point
+                        host.insertContentAtFocusPoint(result.html);
                         self.markUpdated();
                     }
                 } else {
                     Y.use('moodle-core-notification-alert', function() {
                         new M.core.alert({message: M.util.get_string('servererror', 'moodle')});
                     });
-                    if (placeholder) {
-                        placeholder.remove(true);
-                    }
                 }
             }
         };
