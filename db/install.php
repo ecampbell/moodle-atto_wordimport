@@ -55,7 +55,7 @@ function xmldb_atto_wordimport_install() {
         foreach ($groups as $i => $group) {
             $parts = explode('=', $group);
             if (trim($parts[0]) == 'files') {
-                $groups[$i] = 'files = ' . trim($parts[1]) . ', wordimport';
+                $groups[$i] = 'files = wordimport, ' . trim($parts[1]);
                 $found = true;
             }
         }
@@ -65,7 +65,7 @@ function xmldb_atto_wordimport_install() {
         foreach ($groups as $i => $group) {
             $parts = explode('=', $group);
             if (trim($parts[0]) == 'insert') {
-                $groups[$i] = 'insert = ' . trim($parts[1]) . ', wordimport';
+                $groups[$i] = 'insert = wordimport, ' . trim($parts[1]);
                 $found = true;
             }
         }
@@ -75,7 +75,7 @@ function xmldb_atto_wordimport_install() {
         foreach ($groups as $i => $group) {
             $parts = explode('=', $group);
             if (trim($parts[0]) == 'other') {
-                $groups[$i] = 'other = ' . trim($parts[1]) . ', wordimport';
+                $groups[$i] = 'other = wordimport, ' . trim($parts[1]);
                 $found = true;
             }
         }

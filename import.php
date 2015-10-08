@@ -63,7 +63,7 @@ if (!$tmpfilename = $file->copy_content_to_temp()) {
 }
 
 // Convert the Word file into XHTML, store any images, and delete it once we're finished.
-$htmltext = atto_wordimport_convert_to_xhtml($tmpfilename, $contextid, $itemid);
+$htmltext = atto_wordimport_convert_to_xhtml($tmpfilename, $usercontext->id, $itemid);
 atto_wordimport_debug_unlink($tmpfilename);
 
 if (!$htmltext) {

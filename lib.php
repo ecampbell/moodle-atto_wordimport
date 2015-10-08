@@ -57,11 +57,11 @@ function atto_wordimport_strings_for_js() {
  * steps to convert it into XHTML
  *
  * @param string $filename name of file uploaded to file repository as a draft
- * @param int $contextid ID of draft file area where images should be stored
+ * @param int $usercontextid ID of draft file area where images should be stored
  * @param int $draftitemid ID of particular group in draft file area where images should be stored
  * @return mixed Boolean false or XHTML content extracted from Word file
  */
-function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
+function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemid) {
     global $CFG, $USER;
 
     $word2mqxmlstylesheet1 = __DIR__ . "/wordml2xhtml_pass1.xsl"; // Convert WordML into basic XHTML.
@@ -101,7 +101,7 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
     $fs = get_file_storage();
     // Prepare filerecord array for creating each new image file.
     $fileinfo = array(
-        'contextid' => $contextid,
+        'contextid' => $usercontextid,
         'component' => 'user',
         'filearea' => 'draft',
         'userid' => $USER->id,
@@ -130,11 +130,11 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
                     if ($imagesuffix == 'gif' or $imagesuffix == 'png' or $imagesuffix == 'jpg' or $imagesuffix == 'jpeg') {
                         // Prepare the file details for storage, ensuring the image name is unique.
                         $imagenameunique = $imagename;
-                        $file = $fs->get_file($contextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
+                        $file = $fs->get_file($usercontextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
                         while ($file) {
                             $imagenameunique = basename($imagename, '.' . $imagesuffix) . '_' . substr(uniqid(), 8, 4) .
                                 '.' . $imagesuffix;
-                            $file = $fs->get_file($contextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
+                            $file = $fs->get_file($usercontextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
                         }
 
                         $fileinfo['filename'] = $imagenameunique;
@@ -143,10 +143,10 @@ function atto_wordimport_convert_to_xhtml($filename, $contextid, $draftitemid) {
                             " as \"{$imagenameunique}\" with itemid {$draftitemid}", DEBUG_WORDIMPORT);
 
 
-                        $imageurl = "$CFG->wwwroot/draftfile.php/$contextid/user/draft/$draftitemid/$imagenameunique";
+                        $imageurl = "$CFG->wwwroot/draftfile.php/$usercontextid/user/draft/$draftitemid/$imagenameunique";
                         // Return all the details of where the file is stored, even though we don't need them at the moment.
                         $imagestring .= "<file filename=\"media/{$imagename}\"";
-                        $imagestring .= " contextid=\"{$contextid}\" itemid=\"{$draftitemid}\"";
+                        $imagestring .= " contextid=\"{$usercontextid}\" itemid=\"{$draftitemid}\"";
                         $imagestring .= " name=\"{$imagenameunique}\" url=\"{$imageurl}\">{$imageurl}</file>\n";
                     } else {
                         debugging(__FUNCTION__ . ":" . __LINE__ . ": ignore unsupported media file $zefilename" .
