@@ -37,10 +37,7 @@ $contextid = required_param('ctx_id', PARAM_INT);
 $filename = required_param('filename', PARAM_TEXT);
 $sesskey = required_param('sesskey', PARAM_TEXT);
 
-
 list($context, $course, $cm) = get_context_info_array($contextid);
-
-$context = context::instance_by_id($contextid);
 
 // Check that this user is logged in before proceeding.
 require_login($course, false, $cm);
@@ -58,14 +55,14 @@ if (!$file = $fs->get_file($usercontext->id, 'user', 'draft', $itemid, '/', base
 
 // Save the uploaded file to a folder so we can process it using the PHP Zip library
 if (!$tmpfilename = $file->copy_content_to_temp()) {
-    echo '{"error": "' . get_string('cannotsavefile', 'error', basename($filename)) . "}";
+    echo '{"error": "' . get_string('cannotsavefile', 'error', basename($filename)) . '"}';
     die();
 } else {
     // Delete it from the draft file area to avoid possible name-clash messages if it is re-uploaded in the same edit.
     $file->delete();
 }
 
-// Convert the Word file into XHTML with images, and delete it once we're finished.
+// Convert the Word file into XHTML, store any images, and delete it once we're finished.
 $htmltext = atto_wordimport_convert_to_xhtml($tmpfilename, $contextid, $itemid);
 atto_wordimport_debug_unlink($tmpfilename);
 
@@ -82,5 +79,5 @@ $htmltextjson = json_encode($bodytext);
 if ($htmltextjson) {
     echo '{"html": ' . $htmltextjson . '}';
 } else {
-    echo '{"error": "' . get_string('invalidjson', 'repository') . "}";
+    echo '{"error": "' . get_string('invalidjson', 'repository') . '"}';
 }

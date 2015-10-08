@@ -131,8 +131,7 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
         };
 
         var filename = 'filename=' + params.file,
-            // Grab the context ID from the URL, as it doesn't seem to be correct in options.
-            contextID = 'ctx_id=' + params.url.replace(/.*\/draftfile.php\/([0-9]*)\/.*/i, "$1"),
+            contextID = 'ctx_id=' + options.context.id,
             itemid = 'itemid=' + options.itemid,
             sessionkey = 'sesskey=' + M.cfg.sesskey,
             phpImportURL = '/lib/editor/atto/plugins/wordimport/import.php?';
@@ -207,7 +206,6 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
             xhr.onreadystatechange = function() {
                 var placeholder = self.editor.one('#' + uploadid),
                     result,
-                    context,
                     file;
 
                 if (xhr.readyState === 4) {
@@ -256,16 +254,13 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                                 }
                             };
 
-
-                            // Grab the context ID from the URL, as it doesn't seem to be correct in options.
-                            context = result.url.replace(/.*\/draftfile.php\/([0-9]*)\/.*/i, "$1");
-
-                            var contextID = 'ctx_id=' + context,
+                            var contextID = 'ctx_id=' + options.context.id,
                                 itemID = 'itemid=' + options.itemid,
                                 fileName = 'filename=' + file,
                                 sessKey = 'sesskey=' + M.cfg.sesskey,
                                 phpImportURL = '/lib/editor/atto/plugins/wordimport/import.php?';
-                            xhr.open("GET", M.cfg.wwwroot + phpImportURL + contextID + '&' + itemID + '&' + fileName + '&' + sessKey, true);
+                            xhr.open("GET", M.cfg.wwwroot + phpImportURL + contextID + '&' + itemID +
+                                '&' + fileName + '&' + sessKey, true);
                             xhr.send();
                             self.markUpdated();
                         }
