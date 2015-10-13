@@ -108,18 +108,18 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
 
         // Kick off a XMLHttpRequest.
         xhr.onreadystatechange = function() {
-            var result;
+            var upload_result;
 
             if (xhr.readyState === 4) {
                 if (xhr.status === 200) {
-                    result = JSON.parse(xhr.responseText);
-                    if (result) {
-                        if (result.error) {
-                            return new M.core.ajaxException(result);
+                    upload_result = JSON.parse(xhr.responseText);
+                    if (upload_result) {
+                        if (upload_result.error) {
+                            return new M.core.ajaxException(upload_result);
                         }
 
                         // Insert content from file at current focus point.
-                        host.insertContentAtFocusPoint(result.html);
+                        host.insertContentAtFocusPoint(upload_result.html);
                         self.markUpdated();
                     }
                 } else {
@@ -161,7 +161,6 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
         // Only handle the event if a Word 2010 file was dropped in.
         var handlesDataTransfer = (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length);
         if (handlesDataTransfer && requiredFileType === e.dataTransfer.files[0].type) {
-
             var options = host.get('filepickeroptions').link,
                 savepath = (options.savepath === undefined) ? '/' : options.savepath,
                 formData = new FormData(),
@@ -173,6 +172,7 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
 
             e.preventDefault();
             e.stopPropagation();
+
             formData.append('repo_upload_file', e.dataTransfer.files[0]);
             formData.append('itemid', options.itemid);
 
@@ -202,44 +202,55 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
             host.insertContentAtFocusPoint(imagehtml);
             self.markUpdated();
 
-            // Kick off a XMLHttpRequest to upload the file.
+            // Kick off a XMLHttpRequest to upload the dragged-in file.
             xhr.onreadystatechange = function() {
                 var placeholder = self.editor.one('#' + uploadid),
-                    result,
+                    dragdrop_result,
                     file;
 
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-                        result = JSON.parse(xhr.responseText);
-                        if (result) {
-                            if (result.error) {
+                        dragdrop_result = JSON.parse(xhr.responseText);
+                        if (dragdrop_result) {
+                            if (dragdrop_result.error) {
                                 if (placeholder) {
                                     placeholder.remove(true);
                                 }
-                                return new M.core.ajaxException(result);
+                                Y.use('moodle-core-notification-alert', function() {
+                                    new M.core.alert({message: M.util.get_string('fileuploadfailed', 'atto_wordimport')});
+                                });
+                                // return new M.core.ajaxException(dragdrop_result);
                             }
 
-                            file = result.file;
-                            if (result.event && result.event === 'fileexists') {
+                            file = dragdrop_result.file;
+                            if (dragdrop_result.event && dragdrop_result.event === 'fileexists') {
                                 // A file with this name is already in use here - rename to avoid conflict.
-                                file = result.newfile;
+                                file = dragdrop_result.newfile;
                             }
 
                             // Word file uploaded, so kick off another XMLHttpRequest to convert it into HTML.
                             xhr.onreadystatechange = function() {
                                 var placeholder = self.editor.one('#' + uploadid),
+                                    convert_result,
                                     newhtml;
 
                                 if (xhr.readyState === 4) {
                                     if (xhr.status === 200) {
-                                        result = JSON.parse(xhr.responseText);
-                                        if (result) {
-                                            if (result.error) {
-                                                return new M.core.ajaxException(result);
+                                        convert_result = JSON.parse(xhr.responseText);
+                                        if (convert_result) {
+                                            if (convert_result.error) {
+                                                if (placeholder) {
+                                                    placeholder.remove(true);
+                                                }
+                                                Y.use('moodle-core-notification-alert', function() {
+                                                    new M.core.alert({message: M.util.get_string('fileconversionfailed', 'atto_wordimport')});
+                                                });
+                                                // var error_obj = M.core.ajaxException(convert_result);
+                                                // return error_obj;
                                             }
 
                                             // Replace placeholder with actual content from Word file.
-                                            newhtml = Y.Node.create(result.html);
+                                            newhtml = Y.Node.create(convert_result.html);
                                             if (placeholder) {
                                                 placeholder.replace(newhtml);
                                             } else {

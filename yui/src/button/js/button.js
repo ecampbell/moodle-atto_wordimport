@@ -107,18 +107,18 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
 
         // Kick off a XMLHttpRequest.
         xhr.onreadystatechange = function() {
-            var result;
+            var upload_result;
 
             if (xhr.readyState === 4) {
                 if (xhr.status === 200) {
-                    result = JSON.parse(xhr.responseText);
-                    if (result) {
-                        if (result.error) {
-                            return new M.core.ajaxException(result);
+                    upload_result = JSON.parse(xhr.responseText);
+                    if (upload_result) {
+                        if (upload_result.error) {
+                            return new M.core.ajaxException(upload_result);
                         }
 
                         // Insert content from file at current focus point.
-                        host.insertContentAtFocusPoint(result.html);
+                        host.insertContentAtFocusPoint(upload_result.html);
                         self.markUpdated();
                     }
                 } else {
@@ -158,11 +158,9 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
         host.saveSelection();
         e = e._event;
 
-        Y.log('WordImport: File type is ' + e.dataTransfer.files[0].type);
         // Only handle the event if a Word 2010 file was dropped in.
         var handlesDataTransfer = (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length);
         if (handlesDataTransfer && requiredFileType === e.dataTransfer.files[0].type) {
-
             var options = host.get('filepickeroptions').link,
                 savepath = (options.savepath === undefined) ? '/' : options.savepath,
                 formData = new FormData(),
@@ -172,8 +170,10 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                 imagehtml = "",
                 keys = Object.keys(options.repositories);
 
+            Y.log('WordImport: Word 2010 (.docx) file dragged in ' + e.dataTransfer.files[0].type);
             e.preventDefault();
             e.stopPropagation();
+
             formData.append('repo_upload_file', e.dataTransfer.files[0]);
             formData.append('itemid', options.itemid);
 
@@ -194,6 +194,7 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
             // Insert spinner as a placeholder.
             timestamp = new Date().getTime();
             uploadid = 'moodleimage_' + Math.round(Math.random() * 100000) + '-' + timestamp;
+            Y.log('WordImport: _handleWordFileDragDrop initial uploadid = ' + uploadid);
             host.focus();
             host.restoreSelection();
             imagehtml = template({
@@ -204,46 +205,62 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
             host.insertContentAtFocusPoint(imagehtml);
             self.markUpdated();
 
-            // Kick off a XMLHttpRequest to upload the file.
+            // Kick off a XMLHttpRequest to upload the dragged-in file.
             xhr.onreadystatechange = function() {
                 var placeholder = self.editor.one('#' + uploadid),
-                    result,
+                    dragdrop_result,
                     file;
+                Y.log('WordImport: _handleWordFileDragDrop referenced uploadid = ' + uploadid);
 
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-                        result = JSON.parse(xhr.responseText);
-                        if (result) {
-                            if (result.error) {
+                        dragdrop_result = JSON.parse(xhr.responseText);
+                        if (dragdrop_result) {
+                            if (dragdrop_result.error) {
                                 if (placeholder) {
                                     placeholder.remove(true);
                                 }
-                                Y.log('WordImport: JSON result error.');
-                                return new M.core.ajaxException(result);
+                                Y.log('WordImport: _handleWordFileDragDrop upload failed.');
+                                Y.log('WordImport: dragdrop_result = ' + dragdrop_result);
+                                Y.use('moodle-core-notification-alert', function() {
+                                    new M.core.alert({message: M.util.get_string('fileuploadfailed', 'atto_wordimport')});
+                                });
+                                // return new M.core.ajaxException(dragdrop_result);
                             }
 
-                            file = result.file;
-                            if (result.event && result.event === 'fileexists') {
+                            file = dragdrop_result.file;
+                            if (dragdrop_result.event && dragdrop_result.event === 'fileexists') {
                                 // A file with this name is already in use here - rename to avoid conflict.
-                                file = result.newfile;
-                                Y.log('WordImport: JSON result OK, renaming duplicated file.');
+                                file = dragdrop_result.newfile;
+                                Y.log('WordImport: _handleWordFileDragDrop upload is a duplicate file, renaming.');
                             }
 
                             // Word file uploaded, so kick off another XMLHttpRequest to convert it into HTML.
                             xhr.onreadystatechange = function() {
                                 var placeholder = self.editor.one('#' + uploadid),
+                                    convert_result,
                                     newhtml;
 
+                                Y.log('WordImport: _handleWordFileDragDrop referenced uploadid = ' + uploadid);
                                 if (xhr.readyState === 4) {
                                     if (xhr.status === 200) {
-                                        result = JSON.parse(xhr.responseText);
-                                        if (result) {
-                                            if (result.error) {
-                                                return new M.core.ajaxException(result);
+                                        convert_result = JSON.parse(xhr.responseText);
+                                        if (convert_result) {
+                                            if (convert_result.error) {
+                                                if (placeholder) {
+                                                    placeholder.remove(true);
+                                                }
+                                                Y.log('WordImport: _handleWFDD: convert_result = ' + convert_result);
+                                                Y.log('WordImport: _handleWFDD: typeof = ' + typeof(M.core.ajaxException));
+                                                Y.use('moodle-core-notification-alert', function() {
+                                                    new M.core.alert({message: M.util.get_string('fileconversionfailed', 'atto_wordimport')});
+                                                });
+                                                // var error_obj = M.core.ajaxException(convert_result);
+                                                // return error_obj;
                                             }
 
                                             // Replace placeholder with actual content from Word file.
-                                            newhtml = Y.Node.create(result.html);
+                                            newhtml = Y.Node.create(convert_result.html);
                                             if (placeholder) {
                                                 placeholder.replace(newhtml);
                                             } else {
@@ -263,11 +280,10 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                                 fileName = 'filename=' + file,
                                 sessKey = 'sesskey=' + M.cfg.sesskey,
                                 phpImportURL = '/lib/editor/atto/plugins/wordimport/import.php?';
-                            Y.log('WordImport: File info: ' + contextID + ';' + itemID + ';' + fileName);
                             xhr.open("GET", M.cfg.wwwroot + phpImportURL + contextID + '&' + itemID +
                                 '&' + fileName + '&' + sessKey, true);
                             xhr.send();
-                            Y.log('WordImport: File converted');
+                            Y.log('WordImport: _handleWordFileDragDrop sent conversion request for ' + fileName);
                             self.markUpdated();
                         }
                     } else {
@@ -282,7 +298,7 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
             };
             xhr.open("POST", M.cfg.wwwroot + '/repository/repository_ajax.php?action=upload', true);
             xhr.send(formData);
-            Y.log('WordImport: File sent');
+            Y.log('WordImport: File upload request sent');
         }
         return false;
 

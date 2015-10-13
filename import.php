@@ -49,14 +49,14 @@ $PAGE->set_context($context);
 $fs = get_file_storage();
 $usercontext = context_user::instance($USER->id);
 if (!$file = $fs->get_file($usercontext->id, 'user', 'draft', $itemid, '/', basename($filename))) {
-    echo '{"error": "' . get_string('filenotreadable', 'error') . '"}';
-    die();
+    // File is not readable
+    throw new moodle_exception(get_string('errorreadingfile', 'error', basename($filename)));
 }
 
 // Save the uploaded file to a folder so we can process it using the PHP Zip library
 if (!$tmpfilename = $file->copy_content_to_temp()) {
-    echo '{"error": "' . get_string('cannotsavefile', 'error', basename($filename)) . '"}';
-    die();
+    // Cannot save file
+    throw new moodle_exception(get_string('errorcreatingfile', 'error', basename($filename)));
 } else {
     // Delete it from the draft file area to avoid possible name-clash messages if it is re-uploaded in the same edit.
     $file->delete();
@@ -68,8 +68,7 @@ atto_wordimport_debug_unlink($tmpfilename);
 
 if (!$htmltext) {
     // Error processing upload file
-    echo '{"error": "' . get_string('cannotuploadfile', 'error') . '"}';
-    die();
+    throw new moodle_exception(get_string('cannotuploadfile', 'error'));
 }
 
 // Get the body content only, ignoring any metadata in the head.
@@ -79,5 +78,6 @@ $htmltextjson = json_encode($bodytext);
 if ($htmltextjson) {
     echo '{"html": ' . $htmltextjson . '}';
 } else {
-    echo '{"error": "' . get_string('invalidjson', 'repository') . '"}';
+    // Invalid JSON string
+    throw new moodle_exception(get_string('invalidjson', 'repository'));
 }

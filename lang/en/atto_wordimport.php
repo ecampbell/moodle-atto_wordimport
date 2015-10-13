@@ -22,28 +22,13 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['browse'] = 'Browse';
-$string['browserepositories'] = 'Browse repositories...';
-$string['cancel'] = 'Cancel';
 $string['converting'] = 'Importing, please wait...';
-$string['createword'] = 'Create Word Import';
-$string['customstyle'] = 'Custom style';
-$string['importfile'] = 'Import Word file';
-$string['insert'] = 'Insert';
-$string['nothingtoinsert'] = 'Nothing to insert!';
 $string['pluginname'] = 'Word import (Atto)';
 $string['uploading'] = 'Uploading, please wait...';
 
 // Strings used in import.php.
-$string['cannotopentempfile'] = 'Cannot open temporary file <b>{$a}</b>';
-$string['cannotreadzippedfile'] = 'Cannot read Zipped file <b>{$a}</b>';
-$string['cannotwritetotempfile'] = 'Cannot write to temporary file <b>{$a}</b>';
-$string['stylesheetunavailable'] = 'XSLT Stylesheet <b>{$a}</b> is not available';
 $string['transformationfailed'] = 'XSLT transformation failed (<b>{$a}</b>)';
-$string['xsltunavailable'] = 'You need the XSLT library installed in PHP to save this Word file';
 
 // Strings used in JavaScript.
-$string['xmlnotsupported'] = 'Files in XML format not supported: <b>{$a}</b>';
-$string['docnotsupported'] = 'Files in Word 2003 format not supported: <b>{$a}</b>, use Moodle2Word 3.x instead';
-$string['htmlnotsupported'] = 'Files in HTML format not supported: <b>{$a}</b>';
-$string['htmldocnotsupported'] = 'Incorrect Word format: please use <i>File>Save As...</i> to save <b>{$a}</b> in native Word 2010 (.docx) format and import again';
+$string['fileuploadfailed'] = 'File upload failed';
+$string['fileconversionfailed'] = 'File conversion failed';
