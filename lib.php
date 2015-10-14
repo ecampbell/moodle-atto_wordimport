@@ -93,7 +93,8 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
         'moodle_textdirection' => (right_to_left()) ? 'rtl' : 'ltr',
         'moodle_release' => $CFG->release,
         'moodle_url' => $CFG->wwwroot . "/",
-        'pluginname' => 'atto_wordimport',
+        'heading1stylelevel' => get_config('atto_wordimport', 'heading1stylelevel'),
+        'pluginname' => 'atto_wordimport', // Include plugin name to control image data handling
         'debug_flag' => DEBUG_WORDIMPORT
     );
 

@@ -34,7 +34,21 @@
 
     <xsl:param name="debug_flag" select="0"/>
     <xsl:param name="course_id"/>
-    <xsl:param name="heading_demotion_offset" select="2"/>
+    <xsl:param name="heading1stylelevel" select="3"/>
+
+    <!-- Figure out an offset by which to demote headings e.g. Heading 1  to H2, etc. -->
+    <!-- Use a system default, or a document-specific override -->
+    <xsl:variable name="moodleHeading1Level" select="/x:html/x:head/x:meta[@name = 'moodleHeading1Level']/@content"/>
+    <xsl:variable name="heading_demotion_offset">
+        <xsl:choose>
+        <xsl:when test="$moodleHeading1Level != ''">
+            <xsl:value-of select="$moodleHeading1Level - 1"/>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:value-of select="$heading1stylelevel - 1"/>
+        </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
 
     <xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
     <xsl:variable name="lowercase" select="'abcdefghijklmnopqrstuvwxyz'"/>
@@ -47,6 +61,11 @@
 
     <xsl:template match="/">
         <xsl:apply-templates/>
+        <xsl:if test="$debug_flag &gt;= 1">
+        <xsl:comment><xsl:value-of select="concat('system default: heading1stylelevel = ', $heading1stylelevel)"/></xsl:comment>
+        <xsl:comment><xsl:value-of select="concat('document override: moodleHeading1Level = ', $moodleHeading1Level)"/></xsl:comment>
+        <xsl:comment><xsl:value-of select="concat('heading_demotion_offset = ', $heading_demotion_offset)"/></xsl:comment>
+        </xsl:if>
     </xsl:template>
     
     <!-- Start: Identity transformation -->
@@ -231,7 +250,18 @@
     <!-- Demote Heading styles by the required amount -->
     <xsl:template match="x:p[starts-with(@class, 'heading')]" priority="2">
         <xsl:variable name="heading_level" select="substring-after(@class, 'heading')"/>
-        <xsl:variable name="heading_tag" select="concat('h', $heading_level + $heading_demotion_offset)"/>
+        <xsl:variable name="computed_heading_level">
+            <xsl:choose>
+            <xsl:when test="$heading_level + $heading_demotion_offset &gt; 5">
+                <xsl:text>6</xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:value-of select="$heading_level + $heading_demotion_offset"/>
+            </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+
+        <xsl:variable name="heading_tag" select="concat('h', $computed_heading_level)"/>
         <xsl:element name="{$heading_tag}">
             <xsl:apply-templates select="node()"/>
         </xsl:element>

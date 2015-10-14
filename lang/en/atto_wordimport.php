@@ -32,3 +32,8 @@ $string['transformationfailed'] = 'XSLT transformation failed (<b>{$a}</b>)';
 // Strings used in JavaScript.
 $string['fileuploadfailed'] = 'File upload failed';
 $string['fileconversionfailed'] = 'File conversion failed';
+
+// Strings used in settings.
+$string['settings'] = 'Word import settings';
+$string['heading1stylelevel'] = 'Heading element level for Heading 1 style';
+$string['heading1stylelevel_desc'] = 'HTML heading element level to which the Word "Heading 1" style should be mapped';
