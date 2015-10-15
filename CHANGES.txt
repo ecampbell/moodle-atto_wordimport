@@ -2,6 +2,7 @@ Release notes
 -------------
 
 Date          Version   Comment
+2015/10/15    1.0.0     Make uninstall process safer, mark first officially approved release on Moodle plugins directory
 2015/10/14    0.9.5     Use Moodle exception class to flag errors, parameterize heading style to element map
 2015/10/12    0.9.4     Correct context ID handling to work on all platforms, improve error handling
 2015/09/28    0.9.3     Implement drag and drop support
