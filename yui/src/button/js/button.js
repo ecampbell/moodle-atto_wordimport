@@ -253,7 +253,8 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                                                 Y.log('WordImport: _handleWFDD: convert_result = ' + convert_result);
                                                 Y.log('WordImport: _handleWFDD: typeof = ' + typeof(M.core.ajaxException));
                                                 Y.use('moodle-core-notification-alert', function() {
-                                                    new M.core.alert({message: M.util.get_string('fileconversionfailed', 'atto_wordimport')});
+                                                    new M.core.alert({message: M.util.get_string('fileconversionfailed',
+                                                            'atto_wordimport')});
                                                 });
                                                 // var error_obj = M.core.ajaxException(convert_result);
                                                 // return error_obj;
