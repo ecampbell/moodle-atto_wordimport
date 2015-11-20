@@ -25,11 +25,11 @@
 define('AJAX_SCRIPT', true);
 // Development: turn on all debug messages and strict warnings.
 define('DEBUG_WORDIMPORT', E_ALL | E_STRICT);
-//define('DEBUG_WORDIMPORT', 0);
+// @codingStandardsIgnoreLine define('DEBUG_WORDIMPORT', 0);
 
 require(__DIR__ . '/../../../../../config.php');
 // Include XSLT processor functions.
-require_once(__DIR__ . "/xsl_emulate_xslt.inc");
+require_once(__DIR__ . "/xslemulatexslt.inc");
 require(__DIR__ . '/lib.php');
 
 $itemid = required_param('itemid', PARAM_INT);
@@ -49,13 +49,13 @@ $PAGE->set_context($context);
 $fs = get_file_storage();
 $usercontext = context_user::instance($USER->id);
 if (!$file = $fs->get_file($usercontext->id, 'user', 'draft', $itemid, '/', basename($filename))) {
-    // File is not readable
+    // File is not readable.
     throw new moodle_exception(get_string('errorreadingfile', 'error', basename($filename)));
 }
 
-// Save the uploaded file to a folder so we can process it using the PHP Zip library
+// Save the uploaded file to a folder so we can process it using the PHP Zip library.
 if (!$tmpfilename = $file->copy_content_to_temp()) {
-    // Cannot save file
+    // Cannot save file.
     throw new moodle_exception(get_string('errorcreatingfile', 'error', basename($filename)));
 } else {
     // Delete it from the draft file area to avoid possible name-clash messages if it is re-uploaded in the same edit.
@@ -67,7 +67,7 @@ $htmltext = atto_wordimport_convert_to_xhtml($tmpfilename, $usercontext->id, $it
 atto_wordimport_debug_unlink($tmpfilename);
 
 if (!$htmltext) {
-    // Error processing upload file
+    // Error processing upload file.
     throw new moodle_exception(get_string('cannotuploadfile', 'error'));
 }
 
@@ -78,6 +78,6 @@ $htmltextjson = json_encode($bodytext);
 if ($htmltextjson) {
     echo '{"html": ' . $htmltextjson . '}';
 } else {
-    // Invalid JSON string
+    // Invalid JSON string.
     throw new moodle_exception(get_string('invalidjson', 'repository'));
 }

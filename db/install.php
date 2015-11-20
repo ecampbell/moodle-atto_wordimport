@@ -59,8 +59,7 @@ function xmldb_atto_wordimport_install() {
                 $found = true;
             }
         }
-    }
-    else if (strpos($toolbar, 'insert')) {
+    } else if (strpos($toolbar, 'insert')) {
         // Otherwise put it in the other group.
         foreach ($groups as $i => $group) {
             $parts = explode('=', $group);
@@ -69,8 +68,7 @@ function xmldb_atto_wordimport_install() {
                 $found = true;
             }
         }
-    }
-    else if (strpos($toolbar, 'other')) {
+    } else if (strpos($toolbar, 'other')) {
         // Otherwise put it in the other group.
         foreach ($groups as $i => $group) {
             $parts = explode('=', $group);

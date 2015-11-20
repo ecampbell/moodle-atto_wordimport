@@ -62,8 +62,8 @@ function atto_wordimport_strings_for_js() {
 function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemid) {
     global $CFG, $USER;
 
-    $word2mqxmlstylesheet1 = __DIR__ . "/wordml2xhtml_pass1.xsl"; // Convert WordML into basic XHTML.
-    $word2mqxmlstylesheet2 = __DIR__ . "/wordml2xhtml_pass2.xsl"; // Refine basic XHTML into Word-compatible XHTML.
+    $word2mqxmlstylesheet1 = __DIR__ . "/wordml2xhtmlpass1.xsl"; // Convert WordML into basic XHTML.
+    $word2mqxmlstylesheet2 = __DIR__ . "/wordml2xhtmlpass2.xsl"; // Refine basic XHTML into Word-compatible XHTML.
 
     // Check that we can unzip the Word .docx file into its component files.
     $zipres = zip_open($filename);
@@ -94,7 +94,7 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
         'moodle_release' => $CFG->release,
         'moodle_url' => $CFG->wwwroot . "/",
         'heading1stylelevel' => get_config('atto_wordimport', 'heading1stylelevel'),
-        'pluginname' => 'atto_wordimport', // Include plugin name to control image data handling
+        'pluginname' => 'atto_wordimport', // Include plugin name to control image data handling.
         'debug_flag' => DEBUG_WORDIMPORT
     );
 
@@ -129,11 +129,11 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
 
         // Insert internal images into the files table.
         if (strpos($zefilename, "media")) {
-            $imageformat = substr($zefilename, strrpos($zefilename, ".") +1);
+            $imageformat = substr($zefilename, strrpos($zefilename, ".") + 1);
             $imagedata = zip_entry_read($zipentry, $zefilesize);
             $imagename = basename($zefilename);
             $imagesuffix = strtolower(substr(strrchr($zefilename, "."), 1));
-            // gif, png, jpg and jpeg handled OK, but bmp and other non-Internet formats are not.
+            // GIF, PNG, JPG and JPEG handled OK, but bmp and other non-Internet formats are not.
             if ($imagesuffix == 'gif' or $imagesuffix == 'png' or $imagesuffix == 'jpg' or $imagesuffix == 'jpeg') {
                 // Prepare the file details for storage, ensuring the image name is unique.
                 $imagenameunique = $imagename;
@@ -148,7 +148,6 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
                 $fs->create_file_from_string($fileinfo, $imagedata);
                 debugging(__FUNCTION__ . ":" . __LINE__ . ": stored \"{$imagename}\"" .
                     " as \"{$imagenameunique}\" with itemid {$draftitemid}", DEBUG_WORDIMPORT);
-
 
                 $imageurl = "$CFG->wwwroot/draftfile.php/$usercontextid/user/draft/$draftitemid/$imagenameunique";
                 // Return all the details of where the file is stored, even though we don't need them at the moment.
@@ -190,14 +189,15 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
                     $wordmldata .= "<footnoteLinks>" . str_replace($xmldeclaration,
                         zip_entry_read($zipentry, $zefilesize), "") . "</footnoteLinks>\n";
                     break;
-                /*
+                /* @codingStandardsIgnoreStart
                 case "word/_rels/settings.xml.rels":
                     $wordmldata .= "<settingsLinks>" . str_replace($xmldeclaration, "",
                         zip_entry_read($zipentry, $zefilesize)) . "</settingsLinks>\n";
                     break;
+                    @codingStandardsIgnoreEnd
                 */
                 default:
-                    // debugging(__FUNCTION__ . ":" . __LINE__ . ": Ignore $zefilename", DEBUG_WORDIMPORT);
+                    // @codingStandardsIgnoreLine debugging(__FUNCTION__ . ":" . __LINE__ . ": Ignore $zefilename", DEBUG_WORDIMPORT);
             }
         }
         // Get the next file in the Zip package.
@@ -245,7 +245,7 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
     // Strip out superfluous namespace declarations on paragraph elements, which Moodle 2.7+ on Windows seems to throw in.
     $xsltoutput = str_replace('<p xmlns="http://www.w3.org/1999/xhtml"', '<p', $xsltoutput);
     $xsltoutput = str_replace(' xmlns=""', '', $xsltoutput);
-    // Remove 'mml:' prefix from child MathML element and attributes for compatibility with MathJax
+    // Remove 'mml:' prefix from child MathML element and attributes for compatibility with MathJax.
     $xsltoutput = str_replace('<mml:', '<', $xsltoutput);
     $xsltoutput = str_replace('</mml:', '</', $xsltoutput);
     $xsltoutput = str_replace(' mathvariant="normal"', '', $xsltoutput);
@@ -269,19 +269,19 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
  * @return string XHTML text inside <body> element
  */
 function atto_wordimport_get_html_body($xhtmlstring) {
-    // debugging(__FUNCTION__ . "(xhtmlstring = \"" . substr($xhtmlstring, 0, 100) . "\")", DEBUG_WORDIMPORT);
+    // @codingStandardsIgnoreLine debugging(__FUNCTION__ . "(xhtmlstring = \"" . substr($xhtmlstring, 0, 100) . "\")", DEBUG_WORDIMPORT);
 
     $bodystart = stripos($xhtmlstring, '<body>') + strlen('<body>');
     $bodylength = strripos($xhtmlstring, '</body>') - $bodystart;
-    // debugging(__FUNCTION__ . ":" . __LINE__ . ": bodystart = {$bodystart}, bodylength = {$bodylength}", DEBUG_WORDIMPORT);
+    // @codingStandardsIgnoreLine debugging(__FUNCTION__ . ":" . __LINE__ . ": bodystart = {$bodystart}, bodylength = {$bodylength}", DEBUG_WORDIMPORT);
     if ($bodystart !== false || $bodylength !== false) {
         $xhtmlbody = substr($xhtmlstring, $bodystart, $bodylength);
     } else {
-        // debugging(__FUNCTION__ . "() -> Invalid XHTML, using original cdata string", DEBUG_WORDIMPORT);
+        // @codingStandardsIgnoreLine debugging(__FUNCTION__ . "() -> Invalid XHTML, using original cdata string", DEBUG_WORDIMPORT);
         $xhtmlbody = $xhtmlstring;
     }
 
-    // debugging(__FUNCTION__ . "() -> |" . str_replace("\n", "", substr($xhtmlbody, 0, 100)) . " ...|", DEBUG_WORDIMPORT);
+    // @codingStandardsIgnoreLine debugging(__FUNCTION__ . "() -> |" . str_replace("\n", "", substr($xhtmlbody, 0, 100)) . " ...|", DEBUG_WORDIMPORT);
     return $xhtmlbody;
 }
 
@@ -290,7 +290,6 @@ function atto_wordimport_get_html_body($xhtmlstring) {
  *
  * @param string $filename name of file to be deleted
  * @return void
-
  */
 function atto_wordimport_debug_unlink($filename) {
     if (DEBUG_WORDIMPORT == 0) {

@@ -52,8 +52,7 @@ function xmldb_atto_wordimport_uninstall() {
                     $parts[1] = implode(',', $newitems);
                     $newgroups[] = implode('=', $parts);
                 }
-            }
-            else {
+            } else {
                 $newgroups[] = $group;
             }
         }
