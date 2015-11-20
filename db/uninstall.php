@@ -30,7 +30,6 @@
  *
  * @return void
  */
-
 function xmldb_atto_wordimport_uninstall() {
     // Remove 'wordimport' from the toolbar editor_atto config variable.
     $toolbar = get_config('editor_atto', 'toolbar');
