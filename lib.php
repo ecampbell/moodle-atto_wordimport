@@ -62,8 +62,8 @@ function atto_wordimport_strings_for_js() {
 function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemid) {
     global $CFG, $USER;
 
-    $word2mqxmlstylesheet1 = __DIR__ . "/wordml2xhtmlpass1.xsl"; // Convert WordML into basic XHTML.
-    $word2mqxmlstylesheet2 = __DIR__ . "/wordml2xhtmlpass2.xsl"; // Refine basic XHTML into Word-compatible XHTML.
+    $word2xmlstylesheet1 = __DIR__ . "/wordml2xhtmlpass1.xsl"; // Convert WordML into basic XHTML.
+    $word2xmlstylesheet2 = __DIR__ . "/wordml2xhtmlpass2.xsl"; // Refine basic XHTML into Word-compatible XHTML.
 
     // Check that we can unzip the Word .docx file into its component files.
     $zipres = zip_open($filename);
@@ -82,9 +82,9 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
     // Give XSLT as much memory as possible, to enable larger Word files to be imported.
     raise_memory_limit(MEMORY_HUGE);
 
-    if (!file_exists($word2mqxmlstylesheet1)) {
+    if (!file_exists($word2xmlstylesheet1)) {
         // XSLT stylesheet to transform WordML into XHTML is missing.
-        throw new moodle_exception('filemissing', 'moodle', $word2mqxmlstylesheet1);
+        throw new moodle_exception('filemissing', 'moodle', $word2xmlstylesheet1);
     }
 
     // Set common parameters for all XSLT transformations.
@@ -129,7 +129,7 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
 
         // Insert internal images into the files table.
         if (strpos($zefilename, "media")) {
-            $imageformat = substr($zefilename, strrpos($zefilename, ".") + 1);
+            // // @codingStandardsIgnoreLine $imageformat = substr($zefilename, strrpos($zefilename, ".") + 1);
             $imagedata = zip_entry_read($zipentry, $zefilesize);
             $imagename = basename($zefilename);
             $imagesuffix = strtolower(substr(strrchr($zefilename, "."), 1));
@@ -217,7 +217,7 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
     }
 
     $xsltproc = xslt_create();
-    if (!($xsltoutput = xslt_process($xsltproc, $tempwordmlfilename, $word2mqxmlstylesheet1, null, null, $parameters))) {
+    if (!($xsltoutput = xslt_process($xsltproc, $tempwordmlfilename, $word2xmlstylesheet1, null, null, $parameters))) {
         // Transformation failed.
         atto_wordimport_debug_unlink($tempwordmlfilename);
         throw new moodle_exception('transformationfailed', 'atto_wordimport', $tempwordmlfilename);
@@ -234,8 +234,8 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
     }
 
     // Pass 2 - tidy up linear XHTML a bit.
-    debugging(__FUNCTION__ . ":" . __LINE__ . ": XSLT Pass 2 using \"" . $word2mqxmlstylesheet2 . "\"", DEBUG_WORDIMPORT);
-    if (!($xsltoutput = xslt_process($xsltproc, $tempxhtmlfilename, $word2mqxmlstylesheet2, null, null, $parameters))) {
+    debugging(__FUNCTION__ . ":" . __LINE__ . ": XSLT Pass 2 using \"" . $word2xmlstylesheet2 . "\"", DEBUG_WORDIMPORT);
+    if (!($xsltoutput = xslt_process($xsltproc, $tempxhtmlfilename, $word2xmlstylesheet2, null, null, $parameters))) {
         // Transformation failed.
         atto_wordimport_debug_unlink($tempxhtmlfilename);
         throw new moodle_exception('transformationfailed', 'atto_wordimport', $tempxhtmlfilename);
