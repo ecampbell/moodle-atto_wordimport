@@ -2,6 +2,7 @@ Release notes
 -------------
 
 Date          Version   Comment
+2015/12/08    1.1.1     Fix code to pass codechecker, use POST instead of GET to upload Word file
 2015/12/08    1.1.0     Fix error importing some files, clean code to pass codechecker, upgrade maturity to stable
 2015/10/15    1.0.0     Make uninstall process safer, mark first officially approved release on Moodle plugins directory
 2015/10/14    0.9.5     Use Moodle exception class to flag errors, parameterize heading style to element map
