@@ -283,9 +283,9 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                                 itemID = 'itemid=' + options.itemid,
                                 fileName = 'filename=' + file,
                                 sessKey = 'sesskey=' + M.cfg.sesskey,
+                                importParams = contextID + '&' + itemID + '&' + fileName + '&' + sessKey,
                                 phpImportURL = '/lib/editor/atto/plugins/wordimport/import.php?';
-                            xhr.open("GET", M.cfg.wwwroot + phpImportURL + contextID + '&' + itemID +
-                                '&' + fileName + '&' + sessKey, true);
+                            xhr.open("POST", M.cfg.wwwroot + phpImportURL + importParams, true);
                             xhr.send();
                             Y.log('WordImport: _handleWordFileDragDrop sent conversion request for ' + fileName);
                             self.markUpdated();
