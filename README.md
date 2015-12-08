@@ -6,4 +6,4 @@ into the box.
 
 ##Requirements
 * The Word files must be in .docx (Word 2007/2010) format.
-* The XSL PHP extension must be installed on the Moodle server to enable the Word file conversion
+* The XSL PHP extension must be installed on the Moodle server to enable the Word file conversion.

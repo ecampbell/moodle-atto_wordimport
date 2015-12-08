@@ -22,8 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['converting'] = 'Importing, please wait...';
-$string['pluginname'] = 'Word import (Atto)';
+$string['pluginname'] = 'Import Word file';
 $string['uploading'] = 'Uploading, please wait...';
 
 // Strings used in import.php.
@@ -34,6 +33,6 @@ $string['fileuploadfailed'] = 'File upload failed';
 $string['fileconversionfailed'] = 'File conversion failed';
 
 // Strings used in settings.
-$string['settings'] = 'Word import settings';
+$string['settings'] = 'Word file import settings';
 $string['heading1stylelevel'] = 'Heading element level for Heading 1 style';
 $string['heading1stylelevel_desc'] = 'HTML heading element level to which the Word "Heading 1" style should be mapped';

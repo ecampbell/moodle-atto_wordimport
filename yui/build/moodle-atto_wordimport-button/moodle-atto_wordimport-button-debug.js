@@ -37,6 +37,7 @@ YUI.add('moodle-atto_wordimport-button', function (Y, NAME) {
  */
 
 var COMPONENTNAME = 'atto_wordimport',
+    // @codingStandardsIgnoreStart
     IMAGETEMPLATE = '' +
         '<img src="{{url}}" alt="{{alt}}" ' +
             '{{#if width}}width="{{width}}" {{/if}}' +
@@ -46,6 +47,7 @@ var COMPONENTNAME = 'atto_wordimport',
             '{{#if classlist}}class="{{classlist}}" {{/if}}' +
             '{{#if id}}id="{{id}}" {{/if}}' +
             '/>';
+    // @codingStandardsIgnoreEnd
 
 Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
     /**
@@ -76,7 +78,6 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
             callback: function() {
                     this.get('host').showFilepicker('link', this._handleWordFileUpload, this);
             },
-            title: 'importfile',
             callbackArgs: 'wordimport'
         });
         this.editor.on('drop', this._handleWordFileDragDrop, this);
@@ -255,7 +256,8 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                                                 Y.log('WordImport: _handleWFDD: convert_result = ' + convert_result);
                                                 Y.log('WordImport: _handleWFDD: typeof = ' + typeof(M.core.ajaxException));
                                                 Y.use('moodle-core-notification-alert', function() {
-                                                    new M.core.alert({message: M.util.get_string('fileconversionfailed', 'atto_wordimport')});
+                                                    new M.core.alert({message: M.util.get_string('fileconversionfailed',
+                                                            'atto_wordimport')});
                                                 });
                                                 // var error_obj = M.core.ajaxException(convert_result);
                                                 // return error_obj;

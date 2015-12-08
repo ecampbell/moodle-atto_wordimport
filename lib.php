@@ -39,7 +39,6 @@ function atto_wordimport_strings_for_js() {
 
     $strings = array(
         'uploading',
-        'converting',
         'transformationfailed',
         'fileuploadfailed',
         'fileconversionfailed',
@@ -100,9 +99,11 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
 
     // Pre-XSLT preparation: merge the WordML and image content from the .docx Word file into one large XML file.
     // Initialise an XML string to use as a wrapper around all the XML files.
-    $xmldeclaration = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+    $xmldeclaration = '<?xml version="1.0" encoding="UTF-8"?>';
     $wordmldata = $xmldeclaration . "\n<pass1Container>\n";
     $imagestring = "";
+
+    $xmldeclregexp = '/<\?xml version="1.0" ([^>]*)>/';
 
     $fs = get_file_storage();
     // Prepare filerecord array for creating each new image file.
@@ -129,7 +130,7 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
 
         // Insert internal images into the files table.
         if (strpos($zefilename, "media")) {
-            // // @codingStandardsIgnoreLine $imageformat = substr($zefilename, strrpos($zefilename, ".") + 1);
+            // @codingStandardsIgnoreLine $imageformat = substr($zefilename, strrpos($zefilename, ".") + 1);
             $imagedata = zip_entry_read($zipentry, $zefilesize);
             $imagename = basename($zefilename);
             $imagesuffix = strtolower(substr(strrchr($zefilename, "."), 1));
@@ -162,36 +163,36 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
             // Look for required XML files, read and wrap it, remove the XML declaration, and add it to the XML string.
             switch ($zefilename) {
                 case "word/document.xml":
-                    $wordmldata .= "<wordmlContainer>" . str_replace($xmldeclaration, "",
+                    $wordmldata .= "<wordmlContainer>" . preg_replace($xmldeclregexp, "",
                         zip_entry_read($zipentry, $zefilesize)) . "</wordmlContainer>\n";
                     break;
                 case "docProps/core.xml":
-                    $wordmldata .= "<dublinCore>" . str_replace($xmldeclaration, "",
+                    $wordmldata .= "<dublinCore>" . preg_replace($xmldeclregexp, "",
                         zip_entry_read($zipentry, $zefilesize)) . "</dublinCore>\n";
                     break;
                 case "docProps/custom.xml":
-                    $wordmldata .= "<customProps>" . str_replace($xmldeclaration, "",
+                    $wordmldata .= "<customProps>" . preg_replace($xmldeclregexp, "",
                         zip_entry_read($zipentry, $zefilesize)) . "</customProps>\n";
                     break;
                 case "word/styles.xml":
-                    $wordmldata .= "<styleMap>" . str_replace($xmldeclaration, "",
+                    $wordmldata .= "<styleMap>" . preg_replace($xmldeclregexp, "",
                         zip_entry_read($zipentry, $zefilesize)) . "</styleMap>\n";
                     break;
                 case "word/_rels/document.xml.rels":
-                    $wordmldata .= "<documentLinks>" . str_replace($xmldeclaration, "",
+                    $wordmldata .= "<documentLinks>" . preg_replace($xmldeclregexp, "",
                         zip_entry_read($zipentry, $zefilesize)) . "</documentLinks>\n";
                     break;
                 case "word/footnotes.xml":
-                    $wordmldata .= "<footnotesContainer>" . str_replace($xmldeclaration, "",
+                    $wordmldata .= "<footnotesContainer>" . preg_replace($xmldeclregexp, "",
                         zip_entry_read($zipentry, $zefilesize)) . "</footnotesContainer>\n";
                     break;
                 case "word/_rels/footnotes.xml.rels":
-                    $wordmldata .= "<footnoteLinks>" . str_replace($xmldeclaration,
+                    $wordmldata .= "<footnoteLinks>" . preg_replace($xmldeclregexp,
                         zip_entry_read($zipentry, $zefilesize), "") . "</footnoteLinks>\n";
                     break;
                 /* @codingStandardsIgnoreStart
                 case "word/_rels/settings.xml.rels":
-                    $wordmldata .= "<settingsLinks>" . str_replace($xmldeclaration, "",
+                    $wordmldata .= "<settingsLinks>" . preg_replace($xmldeclregexp, "",
                         zip_entry_read($zipentry, $zefilesize)) . "</settingsLinks>\n";
                     break;
                     @codingStandardsIgnoreEnd

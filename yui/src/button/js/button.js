@@ -35,6 +35,7 @@
  */
 
 var COMPONENTNAME = 'atto_wordimport',
+    // @codingStandardsIgnoreStart
     IMAGETEMPLATE = '' +
         '<img src="{{url}}" alt="{{alt}}" ' +
             '{{#if width}}width="{{width}}" {{/if}}' +
@@ -44,6 +45,7 @@ var COMPONENTNAME = 'atto_wordimport',
             '{{#if classlist}}class="{{classlist}}" {{/if}}' +
             '{{#if id}}id="{{id}}" {{/if}}' +
             '/>';
+    // @codingStandardsIgnoreEnd
 
 Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
     /**
@@ -74,7 +76,6 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
             callback: function() {
                     this.get('host').showFilepicker('link', this._handleWordFileUpload, this);
             },
-            title: 'importfile',
             callbackArgs: 'wordimport'
         });
         this.editor.on('drop', this._handleWordFileDragDrop, this);
