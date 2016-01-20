@@ -103,8 +103,6 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
     $wordmldata = $xmldeclaration . "\n<pass1Container>\n";
     $imagestring = "";
 
-    $xmldeclregexp = '/<\?xml version="1.0" ([^>]*)>/';
-
     $fs = get_file_storage();
     // Prepare filerecord array for creating each new image file.
     $fileinfo = array(
@@ -147,8 +145,6 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
 
                 $fileinfo['filename'] = $imagenameunique;
                 $fs->create_file_from_string($fileinfo, $imagedata);
-                debugging(__FUNCTION__ . ":" . __LINE__ . ": stored \"{$imagename}\"" .
-                    " as \"{$imagenameunique}\" with itemid {$draftitemid}", DEBUG_WORDIMPORT);
 
                 $imageurl = "$CFG->wwwroot/draftfile.php/$usercontextid/user/draft/$draftitemid/$imagenameunique";
                 // Return all the details of where the file is stored, even though we don't need them at the moment.
@@ -156,44 +152,38 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
                 $imagestring .= " contextid=\"{$usercontextid}\" itemid=\"{$draftitemid}\"";
                 $imagestring .= " name=\"{$imagenameunique}\" url=\"{$imageurl}\">{$imageurl}</file>\n";
             } else {
-                debugging(__FUNCTION__ . ":" . __LINE__ . ": ignore unsupported media file $zefilename" .
+                // @codingStandardsIgnoreLine debugging(__FUNCTION__ . ":" . __LINE__ . ": ignore unsupported media file $zefilename" .
                     " = $imagename, imagesuffix = $imagesuffix", DEBUG_WORDIMPORT);
             }
         } else {
             // Look for required XML files, read and wrap it, remove the XML declaration, and add it to the XML string.
+            // Read and wrap XML files, remove the XML declaration, and add them to the XML string.
+            $xmlfiledata = preg_replace('/<\?xml version="1.0" ([^>]*)>/', "", zip_entry_read($zipentry, $zefilesize));
             switch ($zefilename) {
                 case "word/document.xml":
-                    $wordmldata .= "<wordmlContainer>" . preg_replace($xmldeclregexp, "",
-                        zip_entry_read($zipentry, $zefilesize)) . "</wordmlContainer>\n";
+                    $wordmldata .= "<wordmlContainer>" . $xmlfiledata . "</wordmlContainer>\n";
                     break;
                 case "docProps/core.xml":
-                    $wordmldata .= "<dublinCore>" . preg_replace($xmldeclregexp, "",
-                        zip_entry_read($zipentry, $zefilesize)) . "</dublinCore>\n";
+                    $wordmldata .= "<dublinCore>" . $xmlfiledata . "</dublinCore>\n";
                     break;
                 case "docProps/custom.xml":
-                    $wordmldata .= "<customProps>" . preg_replace($xmldeclregexp, "",
-                        zip_entry_read($zipentry, $zefilesize)) . "</customProps>\n";
+                    $wordmldata .= "<customProps>" . $xmlfiledata . "</customProps>\n";
                     break;
                 case "word/styles.xml":
-                    $wordmldata .= "<styleMap>" . preg_replace($xmldeclregexp, "",
-                        zip_entry_read($zipentry, $zefilesize)) . "</styleMap>\n";
+                    $wordmldata .= "<styleMap>" . $xmlfiledata . "</styleMap>\n";
                     break;
                 case "word/_rels/document.xml.rels":
-                    $wordmldata .= "<documentLinks>" . preg_replace($xmldeclregexp, "",
-                        zip_entry_read($zipentry, $zefilesize)) . "</documentLinks>\n";
+                    $wordmldata .= "<documentLinks>" . $xmlfiledata . "</documentLinks>\n";
                     break;
                 case "word/footnotes.xml":
-                    $wordmldata .= "<footnotesContainer>" . preg_replace($xmldeclregexp, "",
-                        zip_entry_read($zipentry, $zefilesize)) . "</footnotesContainer>\n";
+                    $wordmldata .= "<footnotesContainer>" . $xmlfiledata . "</footnotesContainer>\n";
                     break;
                 case "word/_rels/footnotes.xml.rels":
-                    $wordmldata .= "<footnoteLinks>" . preg_replace($xmldeclregexp,
-                        zip_entry_read($zipentry, $zefilesize), "") . "</footnoteLinks>\n";
+                    $wordmldata .= "<footnoteLinks>" . $xmlfiledata . "</footnoteLinks>\n";
                     break;
                 /* @codingStandardsIgnoreStart
                 case "word/_rels/settings.xml.rels":
-                    $wordmldata .= "<settingsLinks>" . preg_replace($xmldeclregexp, "",
-                        zip_entry_read($zipentry, $zefilesize)) . "</settingsLinks>\n";
+                    $wordmldata .= "<settingsLinks>" . $xmlfiledata . "</settingsLinks>\n";
                     break;
                     @codingStandardsIgnoreEnd
                 */
@@ -224,8 +214,8 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
         throw new moodle_exception('transformationfailed', 'atto_wordimport', $tempwordmlfilename);
     }
     atto_wordimport_debug_unlink($tempwordmlfilename);
-    debugging(__FUNCTION__ . ":" . __LINE__ . ": Import XSLT Pass 1 succeeded, XHTML output fragment = " .
-        str_replace("\n", "", substr($xsltoutput, 0, 200)), DEBUG_WORDIMPORT);
+    // @codingStandardsIgnoreLine debugging(__FUNCTION__ . ":" . __LINE__ . ": Import XSLT Pass 1 succeeded, XHTML output fragment = " .
+    // @codingStandardsIgnoreLine     str_replace("\n", "", substr($xsltoutput, 0, 200)), DEBUG_WORDIMPORT);
 
     // Write output of Pass 1 to a temporary file, for use in Pass 2.
     $tempxhtmlfilename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".if1";
@@ -235,7 +225,7 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
     }
 
     // Pass 2 - tidy up linear XHTML a bit.
-    debugging(__FUNCTION__ . ":" . __LINE__ . ": XSLT Pass 2 using \"" . $word2xmlstylesheet2 . "\"", DEBUG_WORDIMPORT);
+    // @codingStandardsIgnoreLine debugging(__FUNCTION__ . ":" . __LINE__ . ": XSLT Pass 2 using \"" . $word2xmlstylesheet2 . "\"", DEBUG_WORDIMPORT);
     if (!($xsltoutput = xslt_process($xsltproc, $tempxhtmlfilename, $word2xmlstylesheet2, null, null, $parameters))) {
         // Transformation failed.
         atto_wordimport_debug_unlink($tempxhtmlfilename);
@@ -270,20 +260,12 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
  * @return string XHTML text inside <body> element
  */
 function atto_wordimport_get_html_body($xhtmlstring) {
-    // @codingStandardsIgnoreLine debugging(__FUNCTION__ . "(xhtmlstring = \"" . substr($xhtmlstring, 0, 100) . "\")", DEBUG_WORDIMPORT);
-
-    $bodystart = stripos($xhtmlstring, '<body>') + strlen('<body>');
-    $bodylength = strripos($xhtmlstring, '</body>') - $bodystart;
-    // @codingStandardsIgnoreLine debugging(__FUNCTION__ . ":" . __LINE__ . ": bodystart = {$bodystart}, bodylength = {$bodylength}", DEBUG_WORDIMPORT);
-    if ($bodystart !== false || $bodylength !== false) {
-        $xhtmlbody = substr($xhtmlstring, $bodystart, $bodylength);
+    $matches = null;
+    if (preg_match('/<body[^>]*>(.+)<\/body>/is', $xhtmlstring, $matches)) {
+        return $matches[1];
     } else {
-        // @codingStandardsIgnoreLine debugging(__FUNCTION__ . "() -> Invalid XHTML, using original cdata string", DEBUG_WORDIMPORT);
-        $xhtmlbody = $xhtmlstring;
+        return $xhtmlstring;
     }
-
-    // @codingStandardsIgnoreLine debugging(__FUNCTION__ . "() -> |" . str_replace("\n", "", substr($xhtmlbody, 0, 100)) . " ...|", DEBUG_WORDIMPORT);
-    return $xhtmlbody;
 }
 
 /**

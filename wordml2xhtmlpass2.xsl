@@ -91,13 +91,11 @@
     <!-- Remove redundant style information, retaining only borders and widths on table cells, and text direction in paragraphs-->
     <xsl:template match="@style[not(parent::x:table) and not(contains(., 'direction:'))]" priority="1"/>
 
-
      <!-- Delete superfluous spans that wrap the complete para content -->
-    <xsl:template match="x:span[count(.//node()[self::span]) = count(.//node())]" priority="2"/>
+    <xsl:template match="x:span[count(.//node()[self::x:span]) = count(.//node())]" priority="2"/>
 
     <!-- Out go horizontal bars -->
     <xsl:template match="x:p[@class='horizontalbar']"/>
-
 
     <!-- For character level formatting - bold, italic, subscript, superscript - use semantic HTML rather than CSS styling -->
     <!-- Convert style properties inside span element to elements instead -->
@@ -150,6 +148,18 @@
             <!-- No styles left, so just process the children in the normal way -->
             <xsl:apply-templates select="node()"/>
         </xsl:when>
+        <xsl:when test="$stylePropertyFirst = 'color:#000000'">
+            <!-- Omit spans that define text colour to black -->
+            <xsl:apply-templates select="." mode="styleProperty">
+                <xsl:with-param name="styleProperty" select="$stylePropertyRemainder"/>
+            </xsl:apply-templates>
+        </xsl:when>
+        <xsl:when test="$stylePropertyFirst = 'color:#1155CC' and parent::x:a">
+            <!-- Omit spans inside links that define text colour -->
+            <xsl:apply-templates select="." mode="styleProperty">
+                <xsl:with-param name="styleProperty" select="$stylePropertyRemainder"/>
+            </xsl:apply-templates>
+        </xsl:when>
         <xsl:when test="$stylePropertyFirst = 'font-weight:bold' or $stylePropertyFirst = 'Strong-H'">
             <!-- Convert bold style to strong element -->
             <strong>
@@ -171,6 +181,12 @@
             <xsl:apply-templates select="." mode="styleProperty">
                 <xsl:with-param name="styleProperty" select="$stylePropertyRemainder"/>
             </xsl:apply-templates>
+        </xsl:when>
+        <xsl:when test="$stylePropertyFirst = 'text-decoration:underline' and parent::x:a and contains(@style, 'color:#1155CC')">
+            <!-- Omit underline style inside anchor element -->
+                <xsl:apply-templates select="." mode="styleProperty">
+                    <xsl:with-param name="styleProperty" select="$stylePropertyRemainder"/>
+                </xsl:apply-templates>
         </xsl:when>
         <xsl:when test="$stylePropertyFirst = 'text-decoration:underline'">
             <!-- Convert underline style to u element -->
@@ -345,7 +361,6 @@
         </p>
     </xsl:template>
 
-
     <!-- Delete any temporary ToC Ids to enable differences to be checked more easily, reduce clutter -->
     <xsl:template match="x:a[starts-with(translate(@name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '_toc') and @class = 'bookmarkStart' and count(@*) =3 and not(node())]" priority="4"/>
     <!-- Delete any spurious OLE_LINK bookmarks that Word inserts -->
@@ -354,7 +369,7 @@
 
     <xsl:template match="x:a[@class='bookmarkEnd' and not(node())]" priority="2"/>
     <xsl:template match="x:a[@href='\* MERGEFORMAT']" priority="2"/>
-    
+
     <!-- Convert table body cells containing headings into th's -->
     <xsl:template match="x:td[contains(x:p[1]/@class, 'tablerowhead')]">
         <xsl:value-of select="$debug_newline"/>
