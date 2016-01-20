@@ -151,7 +151,7 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
                 $imagestring .= "<file filename=\"media/{$imagename}\"";
                 $imagestring .= " contextid=\"{$usercontextid}\" itemid=\"{$draftitemid}\"";
                 $imagestring .= " name=\"{$imagenameunique}\" url=\"{$imageurl}\">{$imageurl}</file>\n";
-            } else {
+            // @codingStandardsIgnoreLine } else {
                 // @codingStandardsIgnoreLine debugging(__FUNCTION__ . ":" . __LINE__ . ": ignore unsupported media file $zefilename" .
                 // @codingStandardsIgnoreLine     " = $imagename, imagesuffix = $imagesuffix", DEBUG_WORDIMPORT);
             }
