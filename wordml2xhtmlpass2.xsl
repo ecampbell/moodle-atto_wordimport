@@ -18,7 +18,7 @@
  * XSLT stylesheet to transform rough XHTML derived from Word 2010 files into a more hierarchical format with divs wrapping each heading and table (question name and item)
  *
  * @package qformat_wordtable
- * @copyright 2010-2015 Eoin Campbell
+ * @copyright 2010-2016 Eoin Campbell
  * @author Eoin Campbell
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later (5)
 -->
@@ -27,6 +27,7 @@
     xmlns="http://www.w3.org/1999/xhtml"
     xmlns:x="http://www.w3.org/1999/xhtml"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:mml="http://www.w3.org/1998/Math/MathML"
     exclude-result-prefixes="x"
     version="1.0">
     <xsl:output method="xml" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
@@ -61,11 +62,6 @@
 
     <xsl:template match="/">
         <xsl:apply-templates/>
-        <xsl:if test="$debug_flag &gt;= 1">
-        <xsl:comment><xsl:value-of select="concat('system default: heading1stylelevel = ', $heading1stylelevel)"/></xsl:comment>
-        <xsl:comment><xsl:value-of select="concat('document override: moodleHeading1Level = ', $moodleHeading1Level)"/></xsl:comment>
-        <xsl:comment><xsl:value-of select="concat('heading_demotion_offset = ', $heading_demotion_offset)"/></xsl:comment>
-        </xsl:if>
     </xsl:template>
     
     <!-- Start: Identity transformation -->
@@ -84,10 +80,13 @@
     <xsl:template match="text()">
         <xsl:value-of select="translate(., '&#x2009;', '&#x202f;')"/>
     </xsl:template>
-    
+
     <!-- Remove empty class attributes -->
     <xsl:template match="@class[.='']"/>
     
+    <!-- Omit superfluous MathML markup attributes -->
+    <xsl:template match="@mathvariant"/>
+
     <!-- Remove redundant style information, retaining only borders and widths on table cells, and text direction in paragraphs-->
     <xsl:template match="@style[not(parent::x:table) and not(contains(., 'direction:'))]" priority="1"/>
 
@@ -96,6 +95,20 @@
 
     <!-- Out go horizontal bars -->
     <xsl:template match="x:p[@class='horizontalbar']"/>
+
+    <!-- Convert i to em -->
+    <xsl:template match="x:em[@class = 'italic']|x:i">
+        <em>
+            <xsl:apply-templates select="."/>
+        </em>
+    </xsl:template>
+
+    <!-- Convert b or em/@class=bold to strong -->
+    <xsl:template match="x:em[@class = 'bold']|x:b">
+        <strong>
+            <xsl:apply-templates select="."/>
+        </strong>
+    </xsl:template>
 
     <!-- For character level formatting - bold, italic, subscript, superscript - use semantic HTML rather than CSS styling -->
     <!-- Convert style properties inside span element to elements instead -->
@@ -155,7 +168,7 @@
             </xsl:apply-templates>
         </xsl:when>
         <xsl:when test="$stylePropertyFirst = 'color:#1155CC' and parent::x:a">
-            <!-- Omit spans inside links that define text colour -->
+            <!-- Omit explicit text colour definition inside a hyperlink -->
             <xsl:apply-templates select="." mode="styleProperty">
                 <xsl:with-param name="styleProperty" select="$stylePropertyRemainder"/>
             </xsl:apply-templates>
@@ -183,7 +196,7 @@
             </xsl:apply-templates>
         </xsl:when>
         <xsl:when test="$stylePropertyFirst = 'text-decoration:underline' and parent::x:a and contains(@style, 'color:#1155CC')">
-            <!-- Omit underline style inside anchor element -->
+            <!-- Ignore underline style if it is in a hyperlink-->
                 <xsl:apply-templates select="." mode="styleProperty">
                     <xsl:with-param name="styleProperty" select="$stylePropertyRemainder"/>
                 </xsl:apply-templates>
@@ -362,10 +375,10 @@
     </xsl:template>
 
     <!-- Delete any temporary ToC Ids to enable differences to be checked more easily, reduce clutter -->
-    <xsl:template match="x:a[starts-with(translate(@name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '_toc') and @class = 'bookmarkStart' and count(@*) =3 and not(node())]" priority="4"/>
+    <xsl:template match="x:a[starts-with(translate(@name, $uppercase, $lowercase), '_toc') and @class = 'bookmarkStart' and count(@*) =3 and not(node())]" priority="4"/>
     <!-- Delete any spurious OLE_LINK bookmarks that Word inserts -->
-    <xsl:template match="x:a[starts-with(translate(@name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'ole_link') and @class = 'bookmarkStart']" priority="4"/>
-    <xsl:template match="x:a[starts-with(translate(@name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '_goback') and @class = 'bookmarkStart']" priority="4"/>
+    <xsl:template match="x:a[starts-with(translate(@name, $uppercase, $lowercase), 'ole_link') and @class = 'bookmarkStart']" priority="4"/>
+    <xsl:template match="x:a[starts-with(translate(@name, $uppercase, $lowercase), '_goback') and @class = 'bookmarkStart']" priority="4"/>
 
     <xsl:template match="x:a[@class='bookmarkEnd' and not(node())]" priority="2"/>
     <xsl:template match="x:a[@href='\* MERGEFORMAT']" priority="2"/>
@@ -392,6 +405,9 @@
             <xsl:value-of select="translate(., $uppercase, $lowercase)"/>
         </xsl:attribute>
     </xsl:template>
+
+<!-- Delete unused image, hyperlink and style info -->
+<xsl:template match="x:imageLinks|x:imagesContainer|x:styleMap|x:hyperLinks"/>
 
 <!-- Include debugging information in the output -->
 <xsl:template name="debugComment">
