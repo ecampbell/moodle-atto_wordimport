@@ -153,7 +153,7 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
                 $imagestring .= " name=\"{$imagenameunique}\" url=\"{$imageurl}\">{$imageurl}</file>\n";
             } else {
                 // @codingStandardsIgnoreLine debugging(__FUNCTION__ . ":" . __LINE__ . ": ignore unsupported media file $zefilename" .
-                    " = $imagename, imagesuffix = $imagesuffix", DEBUG_WORDIMPORT);
+                // @codingStandardsIgnoreLine     " = $imagename, imagesuffix = $imagesuffix", DEBUG_WORDIMPORT);
             }
         } else {
             // Look for required XML files, read and wrap it, remove the XML declaration, and add it to the XML string.
