@@ -17,7 +17,7 @@
 
  * XSLT stylesheet to transform rough XHTML derived from Word 2010 files into a more hierarchical format with divs wrapping each heading and table (question name and item)
  *
- * @package qformat_wordtable
+ * @package atto_wordimport
  * @copyright 2010-2016 Eoin Campbell
  * @author Eoin Campbell
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later (5)
@@ -28,12 +28,15 @@
     xmlns:x="http://www.w3.org/1999/xhtml"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns:mml="http://www.w3.org/1998/Math/MathML"
-    exclude-result-prefixes="x"
+    xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    exclude-result-prefixes="x mc"
     version="1.0">
     <xsl:output method="xml" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
     <xsl:preserve-space elements="x:span x:p"/>
 
     <xsl:param name="debug_flag" select="0"/>
+    <xsl:param name="pluginname"/>
     <xsl:param name="course_id"/>
     <xsl:param name="heading1stylelevel" select="3"/>
 
@@ -374,40 +377,170 @@
         </p>
     </xsl:template>
 
-    <!-- Delete any temporary ToC Ids to enable differences to be checked more easily, reduce clutter -->
-    <xsl:template match="x:a[starts-with(translate(@name, $uppercase, $lowercase), '_toc') and @class = 'bookmarkStart' and count(@*) =3 and not(node())]" priority="4"/>
-    <!-- Delete any spurious OLE_LINK bookmarks that Word inserts -->
-    <xsl:template match="x:a[starts-with(translate(@name, $uppercase, $lowercase), 'ole_link') and @class = 'bookmarkStart']" priority="4"/>
-    <xsl:template match="x:a[starts-with(translate(@name, $uppercase, $lowercase), '_goback') and @class = 'bookmarkStart']" priority="4"/>
+    <!-- Preformatted text -->
+    <xsl:template match="x:p[starts-with(@class, 'macro') or starts-with(@class, 'htmlpreformatted')]" priority="2">
+        <xsl:variable name="paraClass" select="@class"/>
+        <xsl:if test="not(starts-with(preceding-sibling::x:p[1]/@class, $paraClass))">
+            <!-- First item in a sequence of preformatted text, so start a '<pre>', and pull in succeeding lines -->
+            <xsl:value-of select="$debug_newline"/>
+            <pre>
+                <xsl:apply-templates/>
+                <!-- Recursively process following paragraphs until we hit one that isn't a list item -->
+                <xsl:apply-templates select="following::x:p[1]" mode="preformatted"/>
+            </pre>
+        </xsl:if>
+        <!-- Silently ignore the item if it is not the first -->
+    </xsl:template>
 
+    <!-- Output another preformatted line only if it has the right class -->
+    <xsl:template match="x:p" mode="preformatted">
+
+        <xsl:choose>
+        <xsl:when test="starts-with(@class, 'macro') or starts-with(@class, 'htmlpreformatted')">
+            <xsl:value-of select="'&#x0a;'"/>
+                <xsl:apply-templates/>
+                <!-- Recursively process following paragraphs until we hit one that isn't a pre -->
+                <xsl:apply-templates select="following::x:p[1]"  mode="preformatted"/>
+        </xsl:when>
+        </xsl:choose>
+    </xsl:template>
+
+    <!-- Delete any temporary ToC Ids to enable differences to be checked more easily, reduce clutter -->
+    <xsl:template match="x:a[starts-with(translate(@name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '_toc') and @class = 'bookmarkStart' and count(@*) =3 and not(node())]" priority="4"/>
+    <xsl:template match="x:a[@class = 'bookmarkStart' and count(@*) = 3 and not(node())]" priority="4"/>
+    <!-- Delete any spurious OLE_LINK bookmarks that Word inserts -->
+    <xsl:template match="x:a[starts-with(translate(@name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'ole_link') and @class = 'bookmarkStart']" priority="4"/>
+    <xsl:template match="x:a[starts-with(translate(@name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '_goback') and @class = 'bookmarkStart']" priority="4"/>
     <xsl:template match="x:a[@class='bookmarkEnd' and not(node())]" priority="2"/>
     <xsl:template match="x:a[@href='\* MERGEFORMAT']" priority="2"/>
+
+    <!-- Handle tables differently depending on the context (booktool, qformat) -->
+    <xsl:template match="x:table">
+        <!-- If in booktool and a table contains a h4 in the first heading cell, then it's a Case Study (for Kimmage DSC) -->
+        <xsl:choose>
+        <xsl:when test="x:thead/x:tr[1]/x:th[1]/x:p[1]/@class = 'heading4' and ($pluginname = 'booktool_wordimport' or $pluginname = 'atto_wordimport')">
+            <div class="casestudy">
+                <xsl:apply-templates select="x:thead/x:tr[1]/x:th[1]/x:p[@class = 'heading4']"/>
+                <div class="whitebox">
+                    <xsl:apply-templates select="x:tbody/x:tr[1]/x:td[1]/node()"/>
+                </div>
+            </div>
+        </xsl:when>
+        <xsl:otherwise>
+            <table>
+                <xsl:apply-templates select="@*"/>
+
+                <!-- Check if a table has a title in the previous paragraph-->
+                <xsl:if test="preceding-sibling::x:p[1]/@class = 'tabletitle'">
+                    <caption>
+                        <xsl:apply-templates select="preceding-sibling::x:p[1]" mode="tablecaption"/>
+                    </caption>
+                </xsl:if>
+
+                <xsl:apply-templates/>
+            </table>
+        </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+
+    <!-- Omit table titles, since they are included in the table itself-->
+    <xsl:template match="x:p[@class = 'tabletitle']"/>
+    <!-- Process the table titles as a caption-->
+    <xsl:template match="x:p[@class = 'tabletitle']" mode="tablecaption">
+        <xsl:apply-templates/>
+    </xsl:template>
+
+    <!-- Clean up table style so that border is either on or off -->
+    <xsl:template match="x:table/@style" priority="2">
+        <!-- Get the style of the 1st body cell in the 1st row of the table -->
+        <xsl:variable name="tdStyle" select="../x:tbody/x:tr/x:td/@style"/>
+        <!-- Get the style of the top border only -->
+        <xsl:variable name="tdStyleBorder" select="substring-before(substring-after($tdStyle, 'border-top:'), ';')"/>
+        <xsl:variable name="tdStyleBorderWidth" select="substring-after(substring-after($tdStyleBorder, ' '), ' ')"/>
+        <xsl:variable name="tdStyleBorderType" select="substring-before($tdStyleBorder, ' ')"/>
+        <!-- Get the 2nd item of the top border style settings, which is the color value -->
+        <xsl:variable name="tdStyleBorderColor" select="substring-before(substring-after($tdStyleBorder, ' '), ' ')"/>
+
+        <xsl:variable name="tableBorderStyleKeep">
+            <xsl:choose>
+    <!-- Remove negative indent on tables, so that the first column is not partially hidden-->
+            <xsl:when test="contains(., 'margin-left:-')">
+                    <xsl:value-of select="substring-before(., 'margin-left:-')"/>
+            </xsl:when>
+            <xsl:otherwise>
+                    <xsl:value-of select="."/>
+            </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+
+        <xsl:variable name="tableBorderColor">
+            <xsl:choose>
+            <!-- Replace windowtext with black-->
+            <xsl:when test="$tdStyleBorderColor = 'windowtext'">
+                    <xsl:value-of select="'black'"/>
+            </xsl:when>
+            <xsl:otherwise>
+                    <xsl:value-of select="$tdStyleBorderColor"/>
+            </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+
+            <xsl:attribute name="style">
+            <xsl:value-of select="concat('cellpadding:1pt; border:', $tdStyleBorderType, ' ', $tableBorderColor, ' ', $tdStyleBorderWidth, '; ', $tableBorderStyleKeep)"/>
+            </xsl:attribute>
+    </xsl:template>
+
+    <!-- Clean up cell styles to reduce verbosity -->
+    <xsl:template match="x:td/@style|x:th/@style" priority="1"/>
+
+    <!-- Handle table body explicitly, so that rows can be marked odd or even -->
+    <xsl:template match="x:tbody">
+        <tbody>
+            <xsl:apply-templates select="x:tr"/>
+        </tbody>
+    </xsl:template>
+
+    <!-- Mark table rows odd or even -->
+    <xsl:template match="x:tbody/x:tr">
+        <xsl:variable name="row_class">
+            <xsl:choose>
+            <xsl:when test="position() mod 2 = 1">
+                <xsl:value-of select="'r0'"/>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:value-of select="'r1'"/>
+            </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+        <tr class="{$row_class}" style="vertical-align: text-top">
+            <xsl:apply-templates/>
+        </tr>
+    </xsl:template>
 
     <!-- Convert table body cells containing headings into th's -->
     <xsl:template match="x:td[contains(x:p[1]/@class, 'tablerowhead')]">
         <xsl:value-of select="$debug_newline"/>
         <th>
-            <xsl:apply-templates select="@*"/>
-            <xsl:apply-templates select="*"/>
+            <xsl:apply-templates/>
         </th>
     </xsl:template>
 
-    <!-- Table cells -->
-    <xsl:template match="x:td">
-        <xsl:value-of select="$debug_newline"/>
-        <td>
-            <xsl:apply-templates select="node()"/>
-        </td>
+    <!-- Process Figure captions, so that they can be explicitly styled -->
+    <xsl:template match="x:p[@class = 'caption' or @class = 'MsoCaption']">
+        <p class="figure-caption"><xsl:apply-templates/></p>
     </xsl:template>
+
+    <!-- Strip out VML/drawingML markup from Word 2010 files (cf. http://officeopenxml.com/drwOverview.php)-->
+    <xsl:template match="mc:AlternateContent|m:ctrlPr"/>
+
+    <!-- Delete unused image, hyperlink and style info -->
+    <xsl:template match="x:imageLinks|x:imagesContainer|x:styleMap|x:hyperLinks"/>
 
     <xsl:template match="@name[parent::x:a]">
         <xsl:attribute name="name">
-            <xsl:value-of select="translate(., $uppercase, $lowercase)"/>
+            <xsl:value-of select="translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')"/>
         </xsl:attribute>
     </xsl:template>
-
-<!-- Delete unused image, hyperlink and style info -->
-<xsl:template match="x:imageLinks|x:imagesContainer|x:styleMap|x:hyperLinks"/>
 
 <!-- Include debugging information in the output -->
 <xsl:template name="debugComment">
