@@ -80,9 +80,7 @@
 
  * XSLT stylesheet to transform WordProcessingML from Word 2010 files into linear XHTML format
  *
- * @package qformat_wordtable
- * @copyright 2010-2015 Eoin Campbell
- * @author Eoin Campbell
+ * @copyright 2004-2005, Oleg Tkachenko
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later (5)
 -->
 
@@ -90,6 +88,8 @@
 
     <xsl:param name="debug_flag" select="'0'"/>
     <xsl:param name="pluginname"/>
+    <xsl:param name="moodle_language"/>
+    <xsl:param name="moodle_textdirection"/>
 
     <xsl:output method="xml" encoding="utf-8" indent="no" omit-xml-declaration="yes"/>
 
@@ -3002,7 +3002,7 @@
         <xsl:param name="prsR" select="$prsRDefault"/>
 
         <xsl:if test="not(w:pPr/w:pStyle/@w:val='z-TopofForm') and not(w:pPr/w:pStyle/@w:val='z-BottomofForm')">
-            <xsl:value-of select="$debug_newline"/>
+            <xsl:value-of select="'&#x0a;'"/>
             <p>
 
                 <xsl:variable name="pStyleId">
@@ -4059,7 +4059,12 @@
 
         <xsl:variable name="prsPAccum">
 
-            <xsl:for-each select="w:tblPr[1]/w:bidiVisual[1]"><xsl:if test="not(@w:val = 'off')">direction:ltr;</xsl:if></xsl:for-each>
+            <xsl:for-each select="w:tblPr[1]/w:bidiVisual[1]">
+                <xsl:if test="not(@w:val = 'off')">
+                    <xsl:value-of select="concat('direction:', $moodle_textdirection, ';')"/>
+                </xsl:if>
+            </xsl:for-each>
+
 
             <xsl:for-each select="$sTblStyleName"><xsl:call-template name="ApplyPPr.many"/></xsl:for-each>
         </xsl:variable>
@@ -4770,6 +4775,10 @@
                 <!-- Dereference the reference ID field to get the file name, and map to the src attribute -->
                 <xsl:value-of select="$imagesContainer/file[@filename = $img_filename]"/>
             </xsl:when>
+            <xsl:when test="$img_rid != '' and $pluginname = 'booktool_wordimport'">
+                <!-- Dereference the reference ID field to get the file name, and map to the src attribute -->
+                <xsl:value-of select="substring-after($img_filename, '/')"/>
+            </xsl:when>
             <xsl:when test="$img_rid != ''">
                 <!-- Dereference the reference ID field to get the file name, and map to the src attribute -->
                 <xsl:value-of select="concat('data:', $imagesContainer/file[@filename = $img_filename]/@mime-type, ';base64,', $imagesContainer/file[@filename = $img_filename])"/>
@@ -4828,6 +4837,7 @@
     <xsl:template match="m:oMathPara">
         <xsl:apply-templates/>
     </xsl:template>
+    <xsl:template match="m:oMathParaPr"/>
 
     <xsl:template match="m:oMath">
         <math xmlns="http://www.w3.org/1998/Math/MathML">
