@@ -103,7 +103,7 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
         }
 
         // Return if selected file doesn't have Word 2010 suffix.
-        if (/\.doc[xm]$/.test(params.file) === false) {
+        if (/\.docx$/.test(params.file) === false) {
             return false;
         }
 
