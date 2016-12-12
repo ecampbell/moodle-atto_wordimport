@@ -23,6 +23,7 @@
  * @license    see original copyright notice below
  */
 
+defined('MOODLE_INTERNAL') || die();
 
 
 /**
