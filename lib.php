@@ -64,6 +64,7 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
     $word2xmlstylesheet1 = __DIR__ . "/wordml2xhtmlpass1.xsl"; // Convert WordML into basic XHTML.
     $word2xmlstylesheet2 = __DIR__ . "/wordml2xhtmlpass2.xsl"; // Refine basic XHTML into Word-compatible XHTML.
 
+    // @codingStandardsIgnoreLine debugging(__FUNCTION__ . ":" . __LINE__ . ": filename = \"{$filename}\"", DEBUG_WORDIMPORT);
     // Check that we can unzip the Word .docx file into its component files.
     $zipres = zip_open($filename);
     if (!is_resource($zipres)) {
@@ -90,10 +91,8 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
     $parameters = array (
         'moodle_language' => current_language(),
         'moodle_textdirection' => (right_to_left()) ? 'rtl' : 'ltr',
-        'moodle_release' => $CFG->release,
-        'moodle_url' => $CFG->wwwroot . "/",
         'heading1stylelevel' => get_config('atto_wordimport', 'heading1stylelevel'),
-        'pluginname' => 'atto_wordimport', // Include plugin name to control image data handling.
+        'pluginname' => 'atto_wordimport', // Include plugin name to control image data handling inside XSLT.
         'debug_flag' => DEBUG_WORDIMPORT
     );
 
@@ -196,13 +195,15 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
     }  // End while loop.
     zip_close($zipres);
 
-    // Add images section and close the merged XML file.
-    $wordmldata .= "<imagesContainer>\n" . $imagestring . "</imagesContainer>\n"  . "</pass1Container>";
+    // Add images section.
+    $wordmldata .= "<imagesContainer>\n" . $imagestring . "</imagesContainer>\n";
+    // Close the merged XML file.
+    $wordmldata .= "</pass1Container>";
 
     // Pass 1 - convert WordML into linear XHTML.
     // Create a temporary file to store the merged WordML XML content to transform.
     $tempwordmlfilename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".wml";
-    if (($nbytes = file_put_contents($tempwordmlfilename, $wordmldata)) == 0) {
+    if ((file_put_contents($tempwordmlfilename, $wordmldata)) === 0) {
         // Cannot save the file.
         throw new moodle_exception('cannotsavefile', 'error', $tempwordmlfilename);
     }
@@ -219,13 +220,15 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
 
     // Write output of Pass 1 to a temporary file, for use in Pass 2.
     $tempxhtmlfilename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".if1";
-    if (($nbytes = file_put_contents($tempxhtmlfilename, $xsltoutput )) == 0) {
+    $xsltoutput = str_replace('<p xmlns="http://www.w3.org/1999/xhtml"', '<p', $xsltoutput);
+    $xsltoutput = str_replace('<span xmlns="http://www.w3.org/1999/xhtml"', '<span', $xsltoutput);
+    $xsltoutput = str_replace(' xmlns=""', '', $xsltoutput);
+    if ((file_put_contents($tempxhtmlfilename, $xsltoutput )) === 0) {
         // Cannot save the file.
         throw new moodle_exception('cannotsavefile', 'error', $tempxhtmlfilename);
     }
 
     // Pass 2 - tidy up linear XHTML a bit.
-    // @codingStandardsIgnoreLine debugging(__FUNCTION__ . ":" . __LINE__ . ": XSLT Pass 2 using \"" . $word2xmlstylesheet2 . "\"", DEBUG_WORDIMPORT);
     if (!($xsltoutput = xslt_process($xsltproc, $tempxhtmlfilename, $word2xmlstylesheet2, null, null, $parameters))) {
         // Transformation failed.
         atto_wordimport_debug_unlink($tempxhtmlfilename);
@@ -235,6 +238,7 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
 
     // Strip out superfluous namespace declarations on paragraph elements, which Moodle 2.7+ on Windows seems to throw in.
     $xsltoutput = str_replace('<p xmlns="http://www.w3.org/1999/xhtml"', '<p', $xsltoutput);
+    $xsltoutput = str_replace('<span xmlns="http://www.w3.org/1999/xhtml"', '<span', $xsltoutput);
     $xsltoutput = str_replace(' xmlns=""', '', $xsltoutput);
     // Remove 'mml:' prefix from child MathML element and attributes for compatibility with MathJax.
     $xsltoutput = str_replace('<mml:', '<', $xsltoutput);
@@ -243,14 +247,17 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
     $xsltoutput = str_replace(' xmlns:mml="http://www.w3.org/1998/Math/MathML"', '', $xsltoutput);
     $xsltoutput = str_replace('<math>', '<math xmlns="http://www.w3.org/1998/Math/MathML">', $xsltoutput);
 
+    // @codingStandardsIgnoreLine debugging(__FUNCTION__ . ":" . __LINE__ . ": Import XSLT Pass 2 succeeded, output = " .
+    // @codingStandardsIgnoreLine     str_replace("\n", "", substr($xsltoutput, 500, 2000)), DEBUG_WORDIMPORT);
+
     // Keep the converted XHTML file for debugging if developer debugging enabled.
-    if (debugging(null, DEBUG_WORDIMPORT)) {
+    if (DEBUG_WORDIMPORT == DEBUG_DEVELOPER and debugging(null, DEBUG_DEVELOPER)) {
         $tempxhtmlfilename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".xhtml";
         file_put_contents($tempxhtmlfilename, $xsltoutput);
     }
 
     return $xsltoutput;
-}   // End function convert_to_xhtml.
+}   // End function atto_wordimport_convert_to_xhtml.
 
 
 /**

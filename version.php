@@ -18,14 +18,14 @@
  * Atto text editor import Microsoft Word files - version.
  *
  * @package    atto_wordimport
- * @copyright  2015 Eoin Campbell
+ * @copyright  2015, 2016 Eoin Campbell
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2016012001;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version   = 2016121301;        // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2014051200;        // Requires Moodle 2.7 or higher, when Atto was added to core.
 $plugin->component = 'atto_wordimport';  // Full name of the plugin (used for diagnostics).
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.2 (Build 2016012001)'; // Human readable version information.
+$plugin->release   = '1.2.0 (Build 2016121301)'; // Human readable version information.
