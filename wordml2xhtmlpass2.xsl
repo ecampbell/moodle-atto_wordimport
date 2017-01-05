@@ -38,7 +38,7 @@
     <xsl:param name="debug_flag" select="0"/>
     <xsl:param name="pluginname"/>
     <xsl:param name="course_id"/>
-    <xsl:param name="heading1stylelevel" select="3"/>
+    <xsl:param name="heading1stylelevel"/> <!-- Should be 1 for Books and WordTable, 3 for Atto -->
 
     <!-- Figure out an offset by which to demote headings e.g. Heading 1  to H2, etc. -->
     <!-- Use a system default, or a document-specific override -->
@@ -54,8 +54,6 @@
         </xsl:choose>
     </xsl:variable>
 
-    <xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
-    <xsl:variable name="lowercase" select="'abcdefghijklmnopqrstuvwxyz'"/>
     <!-- Output a newline before paras and cells when debugging turned on -->
     <xsl:variable name="debug_newline">
         <xsl:if test="$debug_flag &gt;= 1">
