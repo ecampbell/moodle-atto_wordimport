@@ -2,7 +2,8 @@ Release notes
 -------------
 
 Date          Version   Comment
-2016/12/13    1.2.0     Improve formatting of tables and figures, support RTL languages better.
+2017/01/05    1.2.1     Fix error when handling empty table cells
+2016/12/13    1.2.0     Improve formatting of tables and figures, support RTL languages better
 2016/01/20    1.1.2     Clean up spans to omit default text colour, remove underline from links.
 2015/12/08    1.1.1     Fix code to pass codechecker, use POST instead of GET to upload Word file
 2015/12/08    1.1.0     Fix error importing some files, clean code to pass codechecker, upgrade maturity to stable
