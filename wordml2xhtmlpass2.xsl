@@ -23,6 +23,7 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later (5)
 -->
 
+
 <xsl:stylesheet
     xmlns="http://www.w3.org/1999/xhtml"
     xmlns:x="http://www.w3.org/1999/xhtml"
@@ -88,9 +89,6 @@
     <!-- Omit superfluous MathML markup attributes -->
     <xsl:template match="@mathvariant"/>
 
-    <!-- Remove redundant style information, retaining only borders and widths on table cells, and text direction in paragraphs-->
-    <xsl:template match="@style[not(parent::x:table) and not(contains(., 'direction:'))]" priority="1"/>
-
      <!-- Delete superfluous spans that wrap the complete para content -->
     <xsl:template match="x:span[count(.//node()[self::x:span]) = count(.//node())]" priority="2"/>
 
@@ -152,11 +150,14 @@
             </xsl:choose>
         </xsl:variable>
 
+        <!--
         <xsl:call-template name="debugComment">
             <xsl:with-param name="comment_text" select="concat('$stylePropertyRemainder = ', $stylePropertyRemainder, '; $stylePropertyFirst = ', $stylePropertyFirst)"/>
             <xsl:with-param name="inline" select="'true'"/>
             <xsl:with-param name="condition" select="contains($styleProperty, '-H') and $debug_flag &gt;= 2"/>
         </xsl:call-template>
+        -->
+
         <xsl:choose>
         <xsl:when test="$styleProperty = ''">
             <!-- No styles left, so just process the children in the normal way -->
@@ -358,19 +359,21 @@
     <!-- Paragraphs -->
     <xsl:template match="x:p">
         <p>
-            <!-- Keep text direction if specified -->
-            <xsl:if test="contains(@style, 'direction:')">
+            <!-- Keep text direction RTL if specified -->
+            <xsl:if test="contains(@style, 'direction:rtl')">
                 <xsl:attribute name="dir">
-                    <xsl:value-of select="substring-before(substring-after(@style, 'direction:'), ';')"/>
+                    <xsl:value-of select="'rtl'"/>
                 </xsl:attribute>
             </xsl:if>
-            <!-- Keep text alignment if specified -->
+            <!-- Keep text alignment if specified
             <xsl:if test="contains(@style, 'text-align:')">
                 <xsl:attribute name="style">
                     <xsl:value-of select="concat('text-align:', substring-before(substring-after(@style, 'text-align:'), ';'))"/>
                 </xsl:attribute>
             </xsl:if>
+             -->
 
+            <xsl:apply-templates select="@*"/>
             <xsl:apply-templates select="node()"/>
         </p>
     </xsl:template>
@@ -403,6 +406,92 @@
         </xsl:choose>
     </xsl:template>
 
+    <xsl:template match="x:p" mode="blockQuote">
+        <xsl:if test="starts-with(@class, 'blockquote')">
+            <xsl:value-of select="$debug_newline"/>
+            <p>
+                <xsl:apply-templates select="@*"/>
+                <xsl:apply-templates/>
+            </p>
+            <!-- Recursively process following paragraphs until we hit one that isn't a blockQuote -->
+            <xsl:apply-templates select="following::x:p[1]" mode="blockQuote"/>
+        </xsl:if>
+    </xsl:template>
+
+    <!-- Remove redundant style information, retaining only borders and widths on table cells, and text direction in paragraphs-->
+    <xsl:template match="@style[not(parent::x:table) and not(parent::x:span)]" priority="1">
+        <xsl:variable name="processedStyle">
+            <xsl:call-template name="paraStyleProps">
+                <xsl:with-param name="styleProperty" select="."/>
+            </xsl:call-template>
+        </xsl:variable>
+        <xsl:if test="$processedStyle != ''">
+            <xsl:attribute name="style">
+                <xsl:value-of select="$processedStyle"/>
+            </xsl:attribute>
+        </xsl:if>
+    </xsl:template>
+
+    <xsl:template name="paraStyleProps">
+        <xsl:param name="styleProperty"/>
+        <!-- Get the first property in the list -->
+        <xsl:variable name="stylePropertyFirst">
+            <xsl:if test="contains($styleProperty, ';')">
+                <xsl:value-of select="substring-before($styleProperty, ';')"/>
+            </xsl:if>
+        </xsl:variable>
+
+        <!-- Get the remaining properties for passing on in recursive loop-->
+        <xsl:variable name="stylePropertyRemainder">
+            <xsl:if test="contains($styleProperty, ';')">
+                <xsl:value-of select="substring-after($styleProperty, ';')"/>
+            </xsl:if>
+        </xsl:variable>
+
+        <xsl:choose>
+        <xsl:when test="starts-with($stylePropertyFirst, 'margin-') or starts-with($stylePropertyFirst, 'page-break')">
+            <!-- Ignore margin or page-break settings -->
+        </xsl:when>
+        <xsl:when test="starts-with($stylePropertyFirst, 'direction:ltr')">
+            <!-- Remove LTR direction, as it is sometimes both ltr and rtl from Pass 1-->
+        </xsl:when>
+        <xsl:when test="starts-with($stylePropertyFirst, 'text-autospace:')">
+            <!-- Ignore text settings -->
+        </xsl:when>
+        <xsl:when test="starts-with($stylePropertyFirst, 'layout-grid-mode:')">
+            <!-- Ignore table settings -->
+        </xsl:when>
+        <xsl:when test="starts-with($stylePropertyFirst, 'unicode-bidi:') or starts-with($stylePropertyFirst, 'text-justify:')">
+            <!-- Ignore some RTL settings -->
+        </xsl:when>
+        <xsl:when test="$stylePropertyFirst != ''">
+            <xsl:value-of select="concat($stylePropertyFirst, ';')"/>
+        </xsl:when>
+        </xsl:choose>
+
+        <!-- Now process the remaining properties -->
+        <xsl:if test="$stylePropertyRemainder != ''">
+            <xsl:call-template name="paraStyleProps">
+                <xsl:with-param name="styleProperty" select="$stylePropertyRemainder"/>
+            </xsl:call-template>
+        </xsl:if>
+
+    </xsl:template>
+
+    <!-- Omit common classes like Normal and Body Text -->
+    <xsl:template match="@class">
+        <xsl:choose>
+        <xsl:when test="contains(., 'normal') or contains(., 'bodytext')">
+        </xsl:when>
+        <xsl:when test="contains(., 'tablehead') or contains(., 'tablerowhead')">
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:attribute name="class">
+                <xsl:value-of select="."/>
+            </xsl:attribute>
+        </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
     <!-- Delete any temporary ToC Ids to enable differences to be checked more easily, reduce clutter -->
     <xsl:template match="x:a[starts-with(translate(@name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '_toc') and @class = 'bookmarkStart' and count(@*) =3 and not(node())]" priority="4"/>
     <xsl:template match="x:a[@class = 'bookmarkStart' and count(@*) = 3 and not(node())]" priority="4"/>
@@ -414,12 +503,16 @@
 
     <!-- Handle tables differently depending on the context (booktool, qformat) -->
     <xsl:template match="x:table">
-        <!-- If in booktool and a table contains a h4 in the first heading cell, then it's a Case Study (for Kimmage DSC) -->
+        <!-- If not in qformat and a table contains a heading in the first heading cell, then it's a textbox -->
+        <xsl:variable name="tblHeadingClass" select="x:thead/x:tr[1]/x:th[1]/x:p[1]/@class"/>
+        <xsl:variable name="boxType" select="concat('box_type', substring-after($tblHeadingClass, 'heading'))"/>
         <xsl:choose>
-        <xsl:when test="x:thead/x:tr[1]/x:th[1]/x:p[1]/@class = 'heading4' and ($pluginname = 'booktool_wordimport' or $pluginname = 'atto_wordimport')">
-            <div class="casestudy">
-                <xsl:apply-templates select="x:thead/x:tr[1]/x:th[1]/x:p[@class = 'heading4']"/>
-                <div class="whitebox">
+        <xsl:when test="starts-with($tblHeadingClass, 'heading') and ($pluginname != 'qformat_wordtable')">
+            <div class="{concat($boxType, '_wrapper')}">
+                <div class="{concat($boxType, '_head')}">
+                    <xsl:apply-templates select="x:thead/x:tr[1]/x:th[1]/x:p"/>
+                </div>
+                <div class="{concat($boxType, '_body')}">
                     <xsl:apply-templates select="x:tbody/x:tr[1]/x:td[1]/node()"/>
                 </div>
             </div>
@@ -523,6 +616,20 @@
         </th>
     </xsl:template>
 
+    <!-- Block quotes - wrap them in a blockquote wrapper -->
+    <xsl:template match="x:p[@class = 'blockquote' or @class = 'block quote']">
+        <xsl:if test="not(starts-with(preceding-sibling::x:p[1]/@class, 'blockquote'))">
+            <blockquote>
+                <p>
+                    <xsl:apply-templates select="@*"/>
+                    <xsl:apply-templates/>
+                </p>
+                <!-- Recursively process following paragraphs until we hit one that isn't a block quote -->
+                <xsl:apply-templates select="following::x:p[1]" mode="blockQuote"/>
+            </blockquote>
+        </xsl:if>
+    </xsl:template>
+
     <!-- Process Figure captions, so that they can be explicitly styled -->
     <xsl:template match="x:p[@class = 'caption' or @class = 'MsoCaption']">
         <p class="figure-caption"><xsl:apply-templates/></p>
@@ -540,16 +647,16 @@
         </xsl:attribute>
     </xsl:template>
 
-<!-- Include debugging information in the output -->
-<xsl:template name="debugComment">
-    <xsl:param name="comment_text"/>
-    <xsl:param name="inline" select="'false'"/>
-    <xsl:param name="condition" select="'true'"/>
+    <!-- Include debugging information in the output -->
+    <xsl:template name="debugComment">
+        <xsl:param name="comment_text"/>
+        <xsl:param name="inline" select="'false'"/>
+        <xsl:param name="condition" select="'true'"/>
 
-    <xsl:if test="boolean($condition) and $debug_flag &gt;= 1">
-        <xsl:if test="$inline = 'false'"><xsl:text>&#x0a;</xsl:text></xsl:if>
-        <xsl:comment><xsl:value-of select="concat('Debug: ', $comment_text)"/></xsl:comment>
-        <xsl:if test="$inline = 'false'"><xsl:text>&#x0a;</xsl:text></xsl:if>
-    </xsl:if>
-</xsl:template>
+        <xsl:if test="boolean($condition) and $debug_flag &gt;= 1">
+            <xsl:if test="$inline = 'false'"><xsl:text>&#x0a;</xsl:text></xsl:if>
+            <xsl:comment><xsl:value-of select="concat('Debug: ', $comment_text)"/></xsl:comment>
+            <xsl:if test="$inline = 'false'"><xsl:text>&#x0a;</xsl:text></xsl:if>
+        </xsl:if>
+    </xsl:template>
 </xsl:stylesheet>
