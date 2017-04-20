@@ -202,7 +202,7 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
 
     // Pass 1 - convert WordML into linear XHTML.
     // Create a temporary file to store the merged WordML XML content to transform.
-    $tempwordmlfilename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".wml";
+    $tempwordmlfilename = $CFG->tempdir . '/' . basename($filename, ".tmp") . ".wml";
     if ((file_put_contents($tempwordmlfilename, $wordmldata)) === 0) {
         // Cannot save the file.
         throw new moodle_exception('cannotsavefile', 'error', $tempwordmlfilename);
@@ -219,7 +219,7 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
     // @codingStandardsIgnoreLine     str_replace("\n", "", substr($xsltoutput, 0, 200)), DEBUG_WORDIMPORT);
 
     // Write output of Pass 1 to a temporary file, for use in Pass 2.
-    $tempxhtmlfilename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".if1";
+    $tempxhtmlfilename = $CFG->tempdir . '/' . basename($filename, ".tmp") . ".if1";
     $xsltoutput = str_replace('<p xmlns="http://www.w3.org/1999/xhtml"', '<p', $xsltoutput);
     $xsltoutput = str_replace('<span xmlns="http://www.w3.org/1999/xhtml"', '<span', $xsltoutput);
     $xsltoutput = str_replace(' xmlns=""', '', $xsltoutput);
@@ -252,7 +252,7 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
 
     // Keep the converted XHTML file for debugging if developer debugging enabled.
     if (DEBUG_WORDIMPORT == DEBUG_DEVELOPER and debugging(null, DEBUG_DEVELOPER)) {
-        $tempxhtmlfilename = $CFG->dataroot . '/temp/' . basename($filename, ".tmp") . ".xhtml";
+        $tempxhtmlfilename = $CFG->tempdir . '/' . basename($filename, ".tmp") . ".xhtml";
         file_put_contents($tempxhtmlfilename, $xsltoutput);
     }
 
