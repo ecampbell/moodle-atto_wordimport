@@ -25,7 +25,7 @@
 define('AJAX_SCRIPT', true);
 // Development: turn on all debug messages and strict warnings.
 // @codingStandardsIgnoreLine define('DEBUG_WORDIMPORT', E_ALL | E_STRICT);
-define('DEBUG_WORDIMPORT', DEBUG_NONE);
+define('DEBUG_WORDIMPORT', 0);
 
 require(__DIR__ . '/../../../../../config.php');
 // Include XSLT processor functions.

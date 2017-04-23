@@ -2,6 +2,7 @@ Release notes
 -------------
 
 Date          Version   Comment
+2017/04/23    1.2.2     Use Bootstrap panel class for textboxes, use canonical tempdir reference
 2017/01/05    1.2.1     Fix error when handling empty table cells
 2016/12/13    1.2.0     Improve formatting of tables and figures, support RTL languages better
 2016/01/20    1.1.2     Clean up spans to omit default text colour, remove underline from links.
