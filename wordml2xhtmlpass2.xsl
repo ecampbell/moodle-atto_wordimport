@@ -364,6 +364,13 @@
                     <xsl:value-of select="'rtl'"/>
                 </xsl:attribute>
             </xsl:if>
+            <!-- Keep text alignment if specified
+            <xsl:if test="contains(@style, 'text-align:')">
+                <xsl:attribute name="style">
+                    <xsl:value-of select="concat('text-align:', substring-before(substring-after(@style, 'text-align:'), ';'))"/>
+                </xsl:attribute>
+            </xsl:if>
+             -->
 
             <xsl:apply-templates select="@*"/>
             <xsl:apply-templates select="node()"/>
@@ -396,18 +403,6 @@
                 <xsl:apply-templates select="following::x:p[1]"  mode="preformatted"/>
         </xsl:when>
         </xsl:choose>
-    </xsl:template>
-
-    <xsl:template match="x:p" mode="blockQuote">
-        <xsl:if test="starts-with(@class, 'blockquote')">
-            <xsl:value-of select="$debug_newline"/>
-            <p>
-                <xsl:apply-templates select="@*"/>
-                <xsl:apply-templates/>
-            </p>
-            <!-- Recursively process following paragraphs until we hit one that isn't a blockQuote -->
-            <xsl:apply-templates select="following::x:p[1]" mode="blockQuote"/>
-        </xsl:if>
     </xsl:template>
 
     <!-- Remove redundant style information, retaining only borders and widths on table cells, and text direction in paragraphs-->
@@ -619,6 +614,18 @@
                 <!-- Recursively process following paragraphs until we hit one that isn't a block quote -->
                 <xsl:apply-templates select="following::x:p[1]" mode="blockQuote"/>
             </blockquote>
+        </xsl:if>
+    </xsl:template>
+
+    <xsl:template match="x:p" mode="blockQuote">
+        <xsl:if test="starts-with(@class, 'blockquote')">
+            <xsl:value-of select="$debug_newline"/>
+            <p>
+                <xsl:apply-templates select="@*"/>
+                <xsl:apply-templates/>
+            </p>
+            <!-- Recursively process following paragraphs until we hit one that isn't a blockQuote -->
+            <xsl:apply-templates select="following::x:p[1]" mode="blockQuote"/>
         </xsl:if>
     </xsl:template>
 
