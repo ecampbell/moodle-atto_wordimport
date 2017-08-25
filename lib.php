@@ -79,8 +79,8 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
         throw new moodle_exception(get_string('extensionrequired', 'tool_xmldb', 'xsl'));
     }
 
-    // Give XSLT as much memory as possible, to enable larger Word files to be imported.
-    raise_memory_limit(MEMORY_HUGE);
+    // Uncomment next line to give XSLT as much memory as possible, to enable larger Word files to be imported.
+    //raise_memory_limit(MEMORY_HUGE);
 
     if (!file_exists($word2xmlstylesheet1)) {
         // XSLT stylesheet to transform WordML into XHTML is missing.
