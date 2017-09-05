@@ -80,7 +80,7 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
     }
 
     // Uncomment next line to give XSLT as much memory as possible, to enable larger Word files to be imported.
-    //raise_memory_limit(MEMORY_HUGE);
+    // @codingStandardsIgnoreLine raise_memory_limit(MEMORY_HUGE);
 
     if (!file_exists($word2xmlstylesheet1)) {
         // XSLT stylesheet to transform WordML into XHTML is missing.
@@ -180,12 +180,9 @@ function atto_wordimport_convert_to_xhtml($filename, $usercontextid, $draftitemi
                 case "word/_rels/footnotes.xml.rels":
                     $wordmldata .= "<footnoteLinks>" . $xmlfiledata . "</footnoteLinks>\n";
                     break;
-                /* @codingStandardsIgnoreStart
-                case "word/_rels/settings.xml.rels":
-                    $wordmldata .= "<settingsLinks>" . $xmlfiledata . "</settingsLinks>\n";
-                    break;
-                    @codingStandardsIgnoreEnd
-                */
+                // @codingStandardsIgnoreLine case "word/_rels/settings.xml.rels":
+                    // @codingStandardsIgnoreLine $wordmldata .= "<settingsLinks>" . $xmlfiledata . "</settingsLinks>\n";
+                    // @codingStandardsIgnoreLine break;
                 default:
                     // @codingStandardsIgnoreLine debugging(__FUNCTION__ . ":" . __LINE__ . ": Ignore $zefilename", DEBUG_WORDIMPORT);
             }
