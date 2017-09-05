@@ -228,7 +228,7 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                                 Y.use('moodle-core-notification-alert', function() {
                                     new M.core.alert({message: M.util.get_string('fileuploadfailed', 'atto_wordimport')});
                                 });
-                                // return new M.core.ajaxException(dragdropResult);
+                                // @codingStandardsIgnoreLine return new M.core.ajaxException(dragdropResult);
                             }
 
                             file = dragdropResult.file;
@@ -259,8 +259,8 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                                                     new M.core.alert({message: M.util.get_string('fileconversionfailed',
                                                             'atto_wordimport')});
                                                 });
-                                                // var error_obj = M.core.ajaxException(convertResult);
-                                                // return error_obj;
+                                                // @codingStandardsIgnoreLine var error_obj = M.core.ajaxException(convertResult);
+                                                // @codingStandardsIgnoreLine return error_obj;
                                             }
 
                                             // Replace placeholder with actual content from Word file.

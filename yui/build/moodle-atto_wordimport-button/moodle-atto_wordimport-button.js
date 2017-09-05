@@ -68,7 +68,7 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
 
     initializer: function() {
         // If we don't have the capability to view then give up.
-        if (this.get('disabled')){
+        if (this.get('disabled')) {
             return;
         }
 
@@ -90,6 +90,7 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
      * @param {object} params The parameters provided by the filepicker.
      * containing information about the file.
      * @private
+     * @return {boolean} whether the uploaded file is .docx
      */
     _handleWordFileUpload: function(params) {
         var host = this.get('host'),
@@ -109,18 +110,18 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
 
         // Kick off a XMLHttpRequest.
         xhr.onreadystatechange = function() {
-            var upload_result;
+            var uploadResult;
 
             if (xhr.readyState === 4) {
                 if (xhr.status === 200) {
-                    upload_result = JSON.parse(xhr.responseText);
-                    if (upload_result) {
-                        if (upload_result.error) {
-                            return new M.core.ajaxException(upload_result);
+                    uploadResult = JSON.parse(xhr.responseText);
+                    if (uploadResult) {
+                        if (uploadResult.error) {
+                            return new M.core.ajaxException(uploadResult);
                         }
 
                         // Insert content from file at current focus point.
-                        host.insertContentAtFocusPoint(upload_result.html);
+                        host.insertContentAtFocusPoint(uploadResult.html);
                         self.markUpdated();
                     }
                 } else {
@@ -148,6 +149,7 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
      * @method _handleWordFileDragDrop
      * @param {EventFacade} e
      * @private
+     * @return {boolean} whether the dragged file is .docx
      */
     _handleWordFileDragDrop: function(e) {
 
@@ -206,40 +208,40 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
             // Kick off a XMLHttpRequest to upload the dragged-in file.
             xhr.onreadystatechange = function() {
                 var placeholder = self.editor.one('#' + uploadid),
-                    dragdrop_result,
+                    dragdropResult,
                     file;
 
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
-                        dragdrop_result = JSON.parse(xhr.responseText);
-                        if (dragdrop_result) {
-                            if (dragdrop_result.error) {
+                        dragdropResult = JSON.parse(xhr.responseText);
+                        if (dragdropResult) {
+                            if (dragdropResult.error) {
                                 if (placeholder) {
                                     placeholder.remove(true);
                                 }
                                 Y.use('moodle-core-notification-alert', function() {
                                     new M.core.alert({message: M.util.get_string('fileuploadfailed', 'atto_wordimport')});
                                 });
-                                // return new M.core.ajaxException(dragdrop_result);
+                                // @codingStandardsIgnoreLine return new M.core.ajaxException(dragdropResult);
                             }
 
-                            file = dragdrop_result.file;
-                            if (dragdrop_result.event && dragdrop_result.event === 'fileexists') {
+                            file = dragdropResult.file;
+                            if (dragdropResult.event && dragdropResult.event === 'fileexists') {
                                 // A file with this name is already in use here - rename to avoid conflict.
-                                file = dragdrop_result.newfile;
+                                file = dragdropResult.newfile;
                             }
 
                             // Word file uploaded, so kick off another XMLHttpRequest to convert it into HTML.
                             xhr.onreadystatechange = function() {
                                 var placeholder = self.editor.one('#' + uploadid),
-                                    convert_result,
+                                    convertResult,
                                     newhtml;
 
                                 if (xhr.readyState === 4) {
                                     if (xhr.status === 200) {
-                                        convert_result = JSON.parse(xhr.responseText);
-                                        if (convert_result) {
-                                            if (convert_result.error) {
+                                        convertResult = JSON.parse(xhr.responseText);
+                                        if (convertResult) {
+                                            if (convertResult.error) {
                                                 if (placeholder) {
                                                     placeholder.remove(true);
                                                 }
@@ -247,12 +249,12 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                                                     new M.core.alert({message: M.util.get_string('fileconversionfailed',
                                                             'atto_wordimport')});
                                                 });
-                                                // var error_obj = M.core.ajaxException(convert_result);
-                                                // return error_obj;
+                                                // @codingStandardsIgnoreLine var error_obj = M.core.ajaxException(convertResult);
+                                                // @codingStandardsIgnoreLine return error_obj;
                                             }
 
                                             // Replace placeholder with actual content from Word file.
-                                            newhtml = Y.Node.create(convert_result.html);
+                                            newhtml = Y.Node.create(convertResult.html);
                                             if (placeholder) {
                                                 placeholder.replace(newhtml);
                                             } else {
