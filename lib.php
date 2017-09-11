@@ -50,6 +50,46 @@ function atto_wordimport_strings_for_js() {
 
 
 /**
+ * Sends the parameters to JS module.
+ *
+ * @param string $elementid - unused
+ * @param stdClass $options the options for the editor, including the context
+ * @param stdClass $fpoptions - unused
+ * @return array
+ */
+function atto_wordimport_params_for_js($elementid, $options, $fpoptions) {
+    global $CFG, $USER;
+    require_once($CFG->dirroot . '/repository/lib.php');  // Load constants.
+
+    // Disabled if:
+    // - Not logged in or guest.
+    // - Files are not allowed.
+    // - Only URL are supported.
+    $disabled = !isloggedin() || isguestuser() ||
+            (!isset($options['maxfiles']) || $options['maxfiles'] == 0) ||
+            (isset($options['return_types']) && !($options['return_types'] & ~FILE_EXTERNAL));
+
+    $params = array('disabled' => $disabled, 'area' => array(), 'usercontext' => null);
+
+    if (!$disabled) {
+        $params['usercontext'] = context_user::instance($USER->id)->id;
+        foreach (array('itemid', 'context', 'areamaxbytes', 'maxbytes', 'subdirs', 'return_types') as $key) {
+            if (isset($options[$key])) {
+                if ($key === 'context' && is_object($options[$key])) {
+                    // Just context id is enough.
+                    $params['area'][$key] = $options[$key]->id;
+                } else {
+                    $params['area'][$key] = $options[$key];
+                }
+            }
+        }
+    }
+
+    return $params;
+}
+
+
+/**
  * Extract the WordProcessingML XML files from the .docx file, and use a sequence of XSLT
  * steps to convert it into XHTML
  *

@@ -50,6 +50,7 @@ var COMPONENTNAME = 'atto_wordimport',
     // @codingStandardsIgnoreEnd
 
 Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
+
     /**
      * A reference to the current selection at the time that the dialogue
      * was opened.
@@ -311,6 +312,15 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
     }
 
 
+}, {
+    ATTRS: {
+        disabled: {
+            value: true
+        },
+        area: {
+            value: {}
+        }
+    }
 });
 
 
