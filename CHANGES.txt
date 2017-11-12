@@ -2,6 +2,7 @@ Release notes
 -------------
 
 Date          Version   Comment
+2017/11/12    1.3.6     Treat formatted lists as Bullet Lists, remove default line-height property
 2017/09/11    1.3.5     Disable Word Import button if the editor field does not support filearea
 2017/08/25    1.3.4     Don't raise the memory limit for XSLT any more
 2017/08/14    1.3.3     Handle list item duplication bug inside adjacent table cells
