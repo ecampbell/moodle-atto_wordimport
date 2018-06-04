@@ -24,6 +24,7 @@
 
 $string['pluginname'] = 'Import Word file';
 $string['uploading'] = 'Uploading, please wait...';
+$string['privacy:metadata']      = 'The Microsoft Word file import plugin for Atto does not store personal data.';
 
 // Strings used in import.php.
 $string['transformationfailed'] = 'XSLT transformation failed (<b>{$a}</b>)';
