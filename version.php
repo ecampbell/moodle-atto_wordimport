@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Atto text editor import Microsoft Word files - version.
+ * Atto text editor import Microsoft Word files.
  *
  * @package    atto_wordimport
  * @copyright  2015, 2016 Eoin Campbell
@@ -24,8 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2018060401;        // The current plugin version (Date: YYYYMMDDXX).
-$plugin->requires  = 2014051200;        // Requires Moodle 2.7 or higher, when Atto was added to core.
+$plugin->version   = 2020070602;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->requires  = 2016052300;        // Requires Moodle 3.1 or higher.
 $plugin->component = 'atto_wordimport';  // Full name of the plugin (used for diagnostics).
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.7 (Build 2018060401)'; // Human readable version information.
+$plugin->release   = '1.4.0 (Build 2020070602)'; // Human readable version information.
+$plugin->dependencies = array('booktool_wordimport' => 2020070601);

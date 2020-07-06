@@ -22,14 +22,13 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Import Word file';
+$string['pluginname'] = 'Microsoft Word File Import (Atto)';
+$string['editorlabel'] = 'Import Word file';
 $string['uploading'] = 'Uploading, please wait...';
 $string['privacy:metadata']      = 'The Microsoft Word file import plugin for Atto does not store personal data.';
 
-// Strings used in import.php.
-$string['transformationfailed'] = 'XSLT transformation failed (<b>{$a}</b>)';
-
 // Strings used in JavaScript.
+$string['transformationfailed'] = 'XSLT transformation failed (<b>{$a}</b>)';
 $string['fileuploadfailed'] = 'File upload failed';
 $string['fileconversionfailed'] = 'File conversion failed';
 

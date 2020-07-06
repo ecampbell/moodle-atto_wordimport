@@ -29,7 +29,6 @@ define('DEBUG_WORDIMPORT', 0);
 
 require(__DIR__ . '/../../../../../config.php');
 // Include XSLT processor functions.
-require_once(__DIR__ . "/xslemulatexslt.inc");
 require(__DIR__ . '/lib.php');
 
 $itemid = required_param('itemid', PARAM_INT);
@@ -50,13 +49,13 @@ $fs = get_file_storage();
 $usercontext = context_user::instance($USER->id);
 if (!$file = $fs->get_file($usercontext->id, 'user', 'draft', $itemid, '/', basename($filename))) {
     // File is not readable.
-    throw new moodle_exception(get_string('errorreadingfile', 'error', basename($filename)));
+    throw new \moodle_exception(get_string('errorreadingfile', 'error', basename($filename)));
 }
 
 // Save the uploaded file to a folder so we can process it using the PHP Zip library.
 if (!$tmpfilename = $file->copy_content_to_temp()) {
     // Cannot save file.
-    throw new moodle_exception(get_string('errorcreatingfile', 'error', basename($filename)));
+    throw new \moodle_exception(get_string('errorcreatingfile', 'error', basename($filename)));
 } else {
     // Delete it from the draft file area to avoid possible name-clash messages if it is re-uploaded in the same edit.
     $file->delete();
@@ -68,16 +67,13 @@ atto_wordimport_debug_unlink($tmpfilename);
 
 if (!$htmltext) {
     // Error processing upload file.
-    throw new moodle_exception(get_string('cannotuploadfile', 'error'));
+    throw new \moodle_exception(get_string('cannotuploadfile', 'error'));
 }
 
-// Get the body content only, ignoring any metadata in the head.
-$bodytext = atto_wordimport_get_html_body($htmltext);
-// Convert the string to JSON-encoded format.
-$htmltextjson = json_encode($bodytext);
+$htmltextjson = json_encode($htmltext);
 if ($htmltextjson) {
     echo '{"html": ' . $htmltextjson . '}';
 } else {
     // Invalid JSON string.
-    throw new moodle_exception(get_string('invalidjson', 'repository'));
+    throw new \moodle_exception(get_string('invalidjson', 'repository'));
 }
