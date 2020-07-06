@@ -24,8 +24,8 @@
 
 define('AJAX_SCRIPT', true);
 // Development: turn on all debug messages and strict warnings.
-// @codingStandardsIgnoreLine define('DEBUG_WORDIMPORT', E_ALL | E_STRICT);
-define('DEBUG_WORDIMPORT', 0);
+define('DEBUG_WORDIMPORT', E_ALL | E_STRICT);
+// @codingStandardsIgnoreLine define('DEBUG_WORDIMPORT', 0);
 
 require(__DIR__ . '/../../../../../config.php');
 // Include XSLT processor functions.
@@ -63,7 +63,7 @@ if (!$tmpfilename = $file->copy_content_to_temp()) {
 
 // Convert the Word file into XHTML, store any images, and delete it once we're finished.
 $htmltext = atto_wordimport_convert_to_xhtml($tmpfilename, $usercontext->id, $itemid);
-atto_wordimport_debug_unlink($tmpfilename);
+unlink($tmpfilename);
 
 if (!$htmltext) {
     // Error processing upload file.

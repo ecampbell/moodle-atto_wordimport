@@ -100,22 +100,14 @@ function atto_wordimport_params_for_js($elementid, $options, $fpoptions) {
 function atto_wordimport_convert_to_xhtml(string $wordfilename, int $usercontextid, int $draftitemid) {
     global $CFG, $USER;
 
-    // Check that we can unzip the Word .docx file into its component files.
-    $zipres = zip_open($wordfilename);
-    if (!is_resource($zipres)) {
-        // Cannot unzip file.
-        atto_wordimport_debug_unlink($wordfilename);
-        throw new \moodle_exception('cannotunzipfile', 'error');
-    }
+    // Convert the Word file content into XHTML and an array of images.
+    $imagesforzipping = array();
+    $word2xml = new wordconverter();
+    $word2xml->set_heading1styleoffset((int) get_config('atto_wordimport', 'heading1stylelevel'));
+    $xsltoutput = $word2xml->import($wordfilename, $imagesforzipping);
+    $htmlcontent = $word2xml->body_only($xsltoutput);
 
-    // Pre-XSLT preparation: merge the WordML and image content from the .docx Word file into one large XML file.
-    // Initialise an XML string to use as a wrapper around all the XML files.
-    $xmldeclaration = '<?xml version="1.0" encoding="UTF-8"?>';
-    $wordmldata = $xmldeclaration . "\n<pass1Container>\n";
-    $imagestring = "";
-
-    $fs = get_file_storage();
-    // Prepare filerecord array for creating each new image file.
+    // Prepare filerecord array to create each new image file in the user/draft file area for the current user.
     $fileinfo = array(
         'contextid' => $usercontextid,
         'component' => 'user',
@@ -125,110 +117,27 @@ function atto_wordimport_convert_to_xhtml(string $wordfilename, int $usercontext
         'filepath' => '/',
         'filename' => ''
         );
+    $fs = get_file_storage();
 
-    $zipentry = zip_read($zipres);
-    while ($zipentry) {
-        if (!zip_entry_open($zipres, $zipentry, "r")) {
-            // Can't read the XML file from the Word .docx file.
-            zip_close($zipres);
-            throw new \moodle_exception('errorunzippingfiles', 'error');
+    // Store the image files into the file area.
+    foreach ($imagesforzipping as $imagename => $imagedata) {
+        // Try saving with unique name until successful.
+        $imagenameunique = $imagename;
+        $imagesuffix = strtolower(substr(strrchr($imagename, "."), 0)); // Suffix is e.g. ".png"
+        $file = $fs->get_file($usercontextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
+        while ($file) {
+            $imagenameunique = basename($imagename, $imagesuffix) . '_' . substr(uniqid(), 8, 4) . $imagesuffix;
+            $file = $fs->get_file($usercontextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
         }
 
-        $zefilename = zip_entry_name($zipentry);
-        $zefilesize = zip_entry_filesize($zipentry);
+        // Found a unique name that Moodle is happy with, so keep it.
+        $fileinfo['filename'] = $imagenameunique;
+        $fs->create_file_from_string($fileinfo, $imagedata);
+        $imageurl = "$CFG->wwwroot/draftfile.php/$usercontextid/user/draft/$draftitemid/$imagenameunique";
 
-        // Insert internal images into the files table.
-        if (strpos($zefilename, "media")) {
-            // @codingStandardsIgnoreLine $imageformat = substr($zefilename, strrpos($zefilename, ".") + 1);
-            $imagedata = zip_entry_read($zipentry, $zefilesize);
-            $imagename = basename($zefilename);
-            $imagesuffix = strtolower(substr(strrchr($zefilename, "."), 1));
-            // GIF, PNG, JPG and JPEG handled OK, but bmp and other non-Internet formats are not.
-            if ($imagesuffix == 'gif' or $imagesuffix == 'png' or $imagesuffix == 'jpg' or $imagesuffix == 'jpeg') {
-                // Prepare the file details for storage, ensuring the image name is unique.
-                $imagenameunique = $imagename;
-                $file = $fs->get_file($usercontextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
-                while ($file) {
-                    $imagenameunique = basename($imagename, '.' . $imagesuffix) . '_' . substr(uniqid(), 8, 4) .
-                        '.' . $imagesuffix;
-                    $file = $fs->get_file($usercontextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
-                }
-
-                $fileinfo['filename'] = $imagenameunique;
-                $fs->create_file_from_string($fileinfo, $imagedata);
-
-                $imageurl = "$CFG->wwwroot/draftfile.php/$usercontextid/user/draft/$draftitemid/$imagenameunique";
-                // Return all the details of where the file is stored, even though we don't need them at the moment.
-                $imagestring .= "<file filename=\"media/{$imagename}\"";
-                $imagestring .= " contextid=\"{$usercontextid}\" itemid=\"{$draftitemid}\"";
-                $imagestring .= " name=\"{$imagenameunique}\" url=\"{$imageurl}\">{$imageurl}</file>\n";
-            // @codingStandardsIgnoreLine } else {
-                // @codingStandardsIgnoreLine debugging(__FUNCTION__ . ":" . __LINE__ . ": ignore unsupported media file $zefilename" .
-                // @codingStandardsIgnoreLine     " = $imagename, imagesuffix = $imagesuffix", DEBUG_WORDIMPORT);
-            }
-        } else {
-            // Look for required XML files, read and wrap it, remove the XML declaration, and add it to the XML string.
-            // Read and wrap XML files, remove the XML declaration, and add them to the XML string.
-            $xmlfiledata = preg_replace('/<\?xml version="1.0" ([^>]*)>/', "", zip_entry_read($zipentry, $zefilesize));
-            switch ($zefilename) {
-                case "word/document.xml":
-                    $wordmldata .= "<wordmlContainer>" . $xmlfiledata . "</wordmlContainer>\n";
-                    break;
-                case "docProps/core.xml":
-                    $wordmldata .= "<dublinCore>" . $xmlfiledata . "</dublinCore>\n";
-                    break;
-                case "docProps/custom.xml":
-                    $wordmldata .= "<customProps>" . $xmlfiledata . "</customProps>\n";
-                    break;
-                case "word/styles.xml":
-                    $wordmldata .= "<styleMap>" . $xmlfiledata . "</styleMap>\n";
-                    break;
-                case "word/_rels/document.xml.rels":
-                    $wordmldata .= "<documentLinks>" . $xmlfiledata . "</documentLinks>\n";
-                    break;
-                case "word/footnotes.xml":
-                    $wordmldata .= "<footnotesContainer>" . $xmlfiledata . "</footnotesContainer>\n";
-                    break;
-                case "word/_rels/footnotes.xml.rels":
-                    $wordmldata .= "<footnoteLinks>" . $xmlfiledata . "</footnoteLinks>\n";
-                    break;
-                // @codingStandardsIgnoreLine case "word/_rels/settings.xml.rels":
-                    // @codingStandardsIgnoreLine $wordmldata .= "<settingsLinks>" . $xmlfiledata . "</settingsLinks>\n";
-                    // @codingStandardsIgnoreLine break;
-                default:
-                    // @codingStandardsIgnoreLine debugging(__FUNCTION__ . ":" . __LINE__ . ": Ignore $zefilename", DEBUG_WORDIMPORT);
-            }
-        }
-        // Get the next file in the Zip package.
-        $zipentry = zip_read($zipres);
-    }  // End while loop.
-    zip_close($zipres);
-
-    // Add images section.
-    $wordmldata .= "<imagesContainer>\n" . $imagestring . "</imagesContainer>\n";
-    // Close the merged XML file.
-    $wordmldata .= "</pass1Container>";
-
-    // Pass 1 - convert WordML into linear XHTML, embed images, and map "Heading 1" style as defined in config.
-    $word2xml = new wordconverter();
-    $word2xml->set_heading1styleoffset((int) get_config('atto_wordimport', 'heading1stylelevel'));
-    $word2xml->set_imagehandling('embedded');
-    $imagesforzipping = array(); // Unused, as images are embedded for Atto.
-    $xsltoutput = $word2xml->import($wordfilename, $imagesforzipping);
-    $xsltoutput = $word2xml->body_only($xsltoutput);
-
-    return $xsltoutput;
-}   // End function atto_wordimport_convert_to_xhtml.
-
-/**
- * Delete temporary files if debugging disabled
- *
- * @param string $filename name of file to be deleted
- * @return void
- */
-function atto_wordimport_debug_unlink(string $filename) {
-    if (DEBUG_WORDIMPORT == 0) {
-        unlink($filename);
+        // Replace the image name in the HTML content with the full Moodle file path.
+        $htmlcontent = str_replace(' src="' . $imagename . '"', ' src="' . $imageurl . '"', $htmlcontent);
     }
-}
 
+    return $htmlcontent;
+}   // End function atto_wordimport_convert_to_xhtml.
