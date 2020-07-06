@@ -24,7 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$ADMIN->add('editoratto', new admin_category('atto_wordimport', new lang_string('editorlabel', 'atto_wordimport')));
+$ADMIN->add('editoratto', new admin_category('atto_wordimport', new lang_string('pluginname2', 'atto_wordimport')));
 
 $settings = new admin_settingpage('atto_wordimport_settings', new lang_string('settings', 'atto_wordimport'));
 

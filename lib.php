@@ -41,9 +41,7 @@ function atto_wordimport_strings_for_js() {
         'uploading',
         'transformationfailed',
         'fileuploadfailed',
-        'fileconversionfailed',
-        'pluginname',
-        'editorlabel'
+        'fileconversionfailed'
     );
 
     $PAGE->requires->strings_for_js($strings, 'atto_wordimport');

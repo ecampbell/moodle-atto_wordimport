@@ -22,8 +22,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Microsoft Word File Import (Atto)';
-$string['editorlabel'] = 'Import Word file';
+// Plugin name is used as the Atto toolbar icon tooltop, so have to use suitable text there and use another label for real plugin name.
+$string['pluginname'] = 'Import Word file';
+$string['pluginname2'] = 'Microsoft Word File Import (Atto)'.
 $string['uploading'] = 'Uploading, please wait...';
 $string['privacy:metadata']      = 'The Microsoft Word file import plugin for Atto does not store personal data.';
 
@@ -33,6 +34,6 @@ $string['fileuploadfailed'] = 'File upload failed';
 $string['fileconversionfailed'] = 'File conversion failed';
 
 // Strings used in settings.
-$string['settings'] = 'Word file import settings';
+$string['settings'] = 'Microsoft Word File Import (Atto) settings';
 $string['heading1stylelevel'] = 'Heading element level for Heading 1 style';
 $string['heading1stylelevel_desc'] = 'HTML heading element level to which the Word "Heading 1" style should be mapped';
