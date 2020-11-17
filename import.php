@@ -25,7 +25,7 @@
 define('AJAX_SCRIPT', true);
 
 require(__DIR__ . '/../../../../../config.php');
-require(__DIR__ . '/lib.php');
+require_once(__DIR__ . '/lib.php');
 
 $itemid = required_param('itemid', PARAM_INT);
 $contextid = required_param('ctx_id', PARAM_INT);
