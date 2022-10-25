@@ -73,10 +73,12 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
             return;
         }
 
+        var self = this;
         this.addButton({
             icon: 'wordimport',
             iconComponent: COMPONENTNAME,
             callback: function() {
+                    self._currentSelection = this.get('host').getSelection();
                     this.get('host').showFilepicker('link', this._handleWordFileUpload, this);
             },
             callbackArgs: 'wordimport'
@@ -121,8 +123,8 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
                         if (uploadResult.error) {
                             return new M.core.ajaxException(uploadResult);
                         }
-
-                        // Insert content from file at current focus point.
+                        // Insert content from file at original focus point.
+                        host.setSelection(self._currentSelection);
                         host.insertContentAtFocusPoint(uploadResult.html);
                         self.markUpdated();
                     }
@@ -155,7 +157,6 @@ Y.namespace('M.atto_wordimport').Button = Y.Base.create('button', Y.M.editor_att
      * @return {boolean} whether the dragged file is .docx
      */
     _handleWordFileDragDrop: function(e) {
-
         var self = this,
             host = this.get('host'),
             template = Y.Handlebars.compile(IMAGETEMPLATE),
