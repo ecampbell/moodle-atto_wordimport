@@ -41,8 +41,6 @@
 // along with WIRIS Plugin. If not, see <http://www.gnu.org/licenses/>.
 //
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Enable Wordimport plugin button in the files group on installation
  *

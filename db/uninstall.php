@@ -23,9 +23,6 @@
  * @license    see original copyright notice below
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-
 /**
  * Remove Wordimport plugin button from the files group on uninstall
  *
