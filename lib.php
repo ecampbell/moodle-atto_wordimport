@@ -121,7 +121,7 @@ function atto_wordimport_convert_to_xhtml(string $wordfilename, int $usercontext
     foreach ($imagesforzipping as $imagename => $imagedata) {
         // Try saving with unique name until successful.
         $imagenameunique = $imagename;
-        $imagesuffix = strtolower(substr(strrchr($imagename, "."), 0)); // Suffix is e.g. ".png"
+        $imagesuffix = strtolower(substr(strrchr($imagename, "."), 0)); // Suffix is e.g. ".png".
         $file = $fs->get_file($usercontextid, 'user', 'draft', $draftitemid, '/', $imagenameunique);
         while ($file) {
             $imagenameunique = basename($imagename, $imagesuffix) . '_' . substr(uniqid(), 8, 4) . $imagesuffix;
