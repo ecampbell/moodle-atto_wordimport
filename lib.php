@@ -100,7 +100,7 @@ function atto_wordimport_convert_to_xhtml(string $wordfilename, int $usercontext
 
     // Convert the Word file content into XHTML and an array of images.
     $imagesforzipping = array();
-    $word2xml = new wordconverter();
+    $word2xml = new wordconverter('booktool_wordimport', 'convert2bootstrap');
     $word2xml->set_heading1styleoffset((int) get_config('atto_wordimport', 'heading1stylelevel'));
     $xsltoutput = $word2xml->import($wordfilename, $imagesforzipping);
     $htmlcontent = $word2xml->htmlbody($xsltoutput);
