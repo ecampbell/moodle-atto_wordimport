@@ -42,5 +42,22 @@ if ($ADMIN->fulltree) {
                                               $options);
     $settings->add($setting);
 
+    // Add settings to allow Bootstrap, Daylight (Brightspace) or no dynamic styles framework.
+    $frameworkname = new lang_string('dynamicstyles', 'atto_wordimport');
+    $frameworkdesc = new lang_string('dynamicstyles_desc', 'atto_wordimport');
+    $frameworkoptions = [
+        'convert2bootstrap' => new lang_string('dynamicstyles_bootstrap', 'atto_wordimport'),
+        'convert2daylight' => new lang_string('dynamicstyles_daylight', 'atto_wordimport'),
+        'convert2none' => new lang_string('dynamicstyles_none', 'atto_wordimport'),
+    ];
+    $frameworkdefault = 'convert2bootstrap'; // Default to Bootstrap.
+
+    $frameworksetting = new admin_setting_configselect('atto_wordimport/dynamicstyles',
+                                              $frameworkname,
+                                              $frameworkdesc,
+                                              $frameworkdefault,
+                                              $frameworkoptions);
+    $settings->add($frameworksetting);
+
 
 }

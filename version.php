@@ -28,5 +28,5 @@ $plugin->version   = 2025042800;        // The current plugin version (Date: YYY
 $plugin->requires  = 2016052300;        // Requires Moodle 3.1 or higher.
 $plugin->component = 'atto_wordimport';  // Full name of the plugin (used for diagnostics).
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.4.4 (Build 2025042800)'; // Human readable version information.
+$plugin->release   = '1.4.x (Build 2025042800)'; // Human readable version information.
 $plugin->dependencies = ['booktool_wordimport' => 2025042300];

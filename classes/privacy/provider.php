@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Privacy information for administration tool upload enrolment methods- no user data stored.
+ * Privacy information for Atto Word import plugin - no user data stored.
  *
  * @package     atto_wordimport
  * @copyright   2018 Eoin Campbell
