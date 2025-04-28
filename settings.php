@@ -33,7 +33,7 @@ if ($ADMIN->fulltree) {
     $name = new lang_string('heading1stylelevel', 'atto_wordimport');
     $desc = new lang_string('heading1stylelevel_desc', 'atto_wordimport');
     $default = 3;
-    $options = array_combine(range(1, 6), array('h1', 'h2', 'h3', 'h4', 'h5', 'h6'));
+    $options = array_combine(range(1, 6), ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
 
     $setting = new admin_setting_configselect('atto_wordimport/heading1stylelevel',
                                               $name,
@@ -41,23 +41,6 @@ if ($ADMIN->fulltree) {
                                               $default,
                                               $options);
     $settings->add($setting);
-
-    // Add settings to allow Bootstrap, Daylight (Brightspace) or no dynamic styles framework.
-    $frameworkname = new lang_string('dynamicstyles', 'atto_wordimport');
-    $frameworkdesc = new lang_string('dynamicstyles_desc', 'atto_wordimport');
-    $frameworkoptions = array(
-        'convert2bootstrap' => new lang_string('dynamicstyles_bootstrap', 'atto_wordimport'),
-        'convert2daylight' => new lang_string('dynamicstyles_daylight', 'atto_wordimport'),
-        'convert2none' => new lang_string('dynamicstyles_none', 'atto_wordimport')
-    );
-    $frameworkdefault = 'convert2bootstrap'; // Default to Bootstrap.
-
-    $frameworksetting = new admin_setting_configselect('atto_wordimport/dynamicstyles',
-                                              $frameworkname,
-                                              $frameworkdesc,
-                                              $frameworkdefault,
-                                              $frameworkoptions);
-    $settings->add($frameworksetting);
 
 
 }
